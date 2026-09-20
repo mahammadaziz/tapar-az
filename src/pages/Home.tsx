@@ -10,6 +10,7 @@ import { CATEGORIES } from '@/config/categories';
 import { useListings } from '@/hooks/useListings';
 import ListingCard from '@/components/ListingCard';
 import AdRail from '@/components/AdRail';
+import ImageWatermark from '@/components/ImageWatermark';
 import { useTranslation } from 'react-i18next';
 import { db } from '@/firebase/config';
 import { useAuth } from '@/context/AuthContext';
@@ -118,7 +119,7 @@ function HeroStat({ value, label, delay }: { value: string; label: string; delay
 
 function HeroListing({ listing }: { listing: import('@/types').Listing }) {
   const image = listing.media?.find((item) => item.type === 'image')?.url ?? listing.media?.[0]?.url;
-  return <Link to={`/elanlar/${listing.id}`} className="group block overflow-hidden rounded-[1.35rem] border border-line bg-white shadow-[0_12px_32px_rgba(17,24,39,.1)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(17,24,39,.15)] dark:border-line-dark dark:bg-graphite"><div className="relative aspect-[1.8] overflow-hidden rounded-t-[1.35rem] bg-[#eee8e2] dark:bg-background">{image ? <img src={image} alt={listing.title} className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-105" /> : <div className="flex h-full items-center justify-center text-sm text-muted">Şəkil yoxdur</div>}</div><div className="rounded-b-[1.35rem] p-3"><h3 className="line-clamp-2 font-display text-base font-bold leading-tight text-ink transition group-hover:text-[#16A34A] dark:text-white">{listing.title}</h3></div></Link>;
+  return <Link to={`/elanlar/${listing.id}`} className="group block overflow-hidden rounded-[1.35rem] border border-line bg-white shadow-[0_12px_32px_rgba(17,24,39,.1)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(17,24,39,.15)] dark:border-line-dark dark:bg-graphite"><div className="relative aspect-[1.8] overflow-hidden rounded-t-[1.35rem] bg-[#eee8e2] dark:bg-background">{image ? <><img src={image} alt={listing.title} className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-105" /><ImageWatermark /></> : <div className="flex h-full items-center justify-center text-sm text-muted">Şəkil yoxdur</div>}</div><div className="rounded-b-[1.35rem] p-3"><h3 className="line-clamp-2 font-display text-base font-bold leading-tight text-ink transition group-hover:text-[#16A34A] dark:text-white">{listing.title}</h3></div></Link>;
 }
 
 function TrustItem({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
