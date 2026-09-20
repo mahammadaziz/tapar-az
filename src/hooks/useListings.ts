@@ -72,23 +72,17 @@ export function useListings(filters: ListingFilters) {
     } else setLoadingMore(true);
 
     try {
-      let cursor = cursorRef.current;
-      let sourceHasMore = true;
-      let matched: Listing[] = [];
-      while (sourceHasMore && matched.length < PAGE_SIZE) {
-        const base = [where('status', '==', 'active'), limit(PAGE_SIZE)] as const;
-        const pageQuery = cursor
-          ? query(collection(db, 'listings'), base[0], startAfter(cursor), base[1])
-          : query(collection(db, 'listings'), base[0], base[1]);
-        const snapshot = await getDocs(pageQuery);
-        cursor = snapshot.docs[snapshot.docs.length - 1] ?? cursor;
-        sourceHasMore = snapshot.docs.length === PAGE_SIZE;
-        const page = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as Listing);
-        matched = matched.concat(page.filter((item) => matches(item, filtersRef.current)));
-        if (snapshot.empty) break;
-      }
+      const cursor = cursorRef.current;
+      const pageQuery = cursor
+        ? query(collection(db, 'listings'), where('status', '==', 'active'), startAfter(cursor), limit(PAGE_SIZE))
+        : query(collection(db, 'listings'), where('status', '==', 'active'), limit(PAGE_SIZE));
+      const snapshot = await getDocs(pageQuery);
+      const nextCursor = snapshot.docs[snapshot.docs.length - 1] ?? cursor;
+      const sourceHasMore = snapshot.docs.length === PAGE_SIZE;
+      const page = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as Listing);
+      const matched = page.filter((item) => matches(item, filtersRef.current));
       if (reset && requestId !== requestRef.current) return;
-      cursorRef.current = cursor;
+      cursorRef.current = nextCursor;
       setListings((previous) => reset ? sortListings(matched, filtersRef.current.sort) : sortListings(previous.concat(matched), filtersRef.current.sort));
       setHasMore(sourceHasMore);
     } catch (err) {

@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Carousel, Input, Skeleton } from 'antd';
 import { collection, getCountFromServer } from 'firebase/firestore';
@@ -22,8 +22,19 @@ export default function Home() {
   const { language } = useLanguage();
   const [q, setQ] = useState('');
   const [userCount, setUserCount] = useState<number | null>(null);
-  const { listings: latest, loading: latestLoading } = useListings({ sort: 'newest' });
+  const latestLoadMoreRef = useRef<HTMLDivElement | null>(null);
+  const { listings: latest, loading: latestLoading, loadingMore: latestLoadingMore, hasMore: latestHasMore, loadMore: loadMoreLatest } = useListings({ sort: 'newest' });
   const latestSix = latest.slice(0, 6);
+
+  useEffect(() => {
+    const target = latestLoadMoreRef.current;
+    if (!target) return undefined;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting) loadMoreLatest();
+    }, { rootMargin: '500px 0px' });
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [loadMoreLatest]);
 
   useEffect(() => {
     if (!user) { setUserCount(null); return; }
@@ -95,6 +106,8 @@ export default function Home() {
           <TrustItem icon={<TeamOutlined />} title={t('trust3')} text={t('trustText3')} />
         </div>
       </section>
+
+      {latestHasMore && <div ref={latestLoadMoreRef} className="flex min-h-12 items-center justify-center px-6 pb-8 text-sm text-muted">{latestLoadingMore ? t('loading') : ''}</div>}
 
   
 

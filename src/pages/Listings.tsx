@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Empty, Input, InputNumber, Radio, Select, Switch } from 'antd';
 import { SearchOutlined, SlidersOutlined } from '@ant-design/icons';
@@ -42,12 +42,23 @@ export default function Listings() {
   const [maxPrice, setMaxPrice] = useState<number>();
   const [attributes, setAttributes] = useState<ListingAttributes>({});
   const activeCategory = getCategory(category);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const categories = CATEGORIES.map((item) => ({ value: item.key, label: categoryLabel(item.key, language), image: item.image }));
   const activeSubcategory = activeCategory?.subcategories.find((item) => item.key === subcategory) ?? activeCategory?.subcategories[0];
   const visibleFields = activeSubcategory?.fields.filter((field) => isFieldVisible(field, attributes)) ?? [];
   const listingFilters = useMemo(() => ({ searchTerm: params.get('q') ?? undefined, category, city, minPrice, maxPrice, sort: 'newest' as const, subcategory: activeSubcategory?.key, attributes }), [params, category, city, minPrice, maxPrice, activeSubcategory?.key, attributes]);
   const { listings, loading, loadingMore, hasMore, loadMore, error } = useListings(listingFilters);
   const activeSearch = params.get('q');
+
+  useEffect(() => {
+    const target = loadMoreRef.current;
+    if (!target) return undefined;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting) loadMore();
+    }, { rootMargin: '500px 0px' });
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [loadMore]);
 
   const search = () => {
     const next = new URLSearchParams(params);
@@ -87,7 +98,7 @@ export default function Listings() {
           {visibleFields.length > 0 && <div className="border-t border-line pt-4 dark:border-line-dark"><p className="mb-3 text-xs font-bold uppercase tracking-wide text-muted">{activeCategory ? categoryLabel(activeCategory.key, language) : ''} filterləri</p><div className="space-y-3">{visibleFields.map((field) => <label key={field.name} className="block"><span className="mb-1.5 block text-xs font-medium text-muted">{field.label}</span><FilterField field={field} value={attributes[field.name]} onChange={(value) => updateAttribute(field.name, value)} /></label>)}</div></div>}
         </div>
       </aside>
-      <section className="min-w-0"><div className="mb-4 flex items-center justify-between"><p className="text-sm text-muted">{loading && listings.length === 0 ? t('loading') : `${listings.length} ${t('adCount')}`}</p>{activeCategory && <span className="rounded-full bg-action/10 px-3 py-1 text-xs font-semibold text-action">{categoryLabel(activeCategory.key, language)}</span>}</div>{loading && listings.length === 0 ? <div className="market-surface py-24 text-center text-muted">{t('firebaseLoading')}</div> : listings.length === 0 ? <Empty description={error ? t('firebaseError') : t('searchNoResults')} className="market-surface py-24" /> : <><div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">{listings.map((item) => <ListingCard key={item.id} listing={item} />)}</div>{hasMore && <div className="mt-8 text-center"><button onClick={loadMore} disabled={loadingMore} className="market-action px-5 py-2.5">{loadingMore ? t('loading') : t('loadMore')}</button></div>}</>}</section>
+      <section className="min-w-0"><div className="mb-4 flex items-center justify-between"><p className="text-sm text-muted">{loading && listings.length === 0 ? t('loading') : `${listings.length} ${t('adCount')}`}</p>{activeCategory && <span className="rounded-full bg-action/10 px-3 py-1 text-xs font-semibold text-action">{categoryLabel(activeCategory.key, language)}</span>}</div>{loading && listings.length === 0 ? <div className="market-surface py-24 text-center text-muted">{t('firebaseLoading')}</div> : listings.length === 0 ? <Empty description={error ? t('firebaseError') : t('searchNoResults')} className="market-surface py-24" /> : <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">{listings.map((item) => <ListingCard key={item.id} listing={item} />)}</div>}{hasMore && <div ref={loadMoreRef} className="flex min-h-16 items-center justify-center text-sm text-muted">{loadingMore ? t('loading') : ''}</div>}</section>
     </div>
   </div></main>;
 }

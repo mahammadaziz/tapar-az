@@ -11,7 +11,7 @@ export default function Footer() {
             TAPAR<span className="text-action">.AZ</span>
           </div>
           <p className="text-sm text-secondary dark:text-muted leading-relaxed">
-            {t('heroText')}
+            {t('footerDescription')}
           </p>
         </div>
         <FooterCol title={t('categories')} links={[
