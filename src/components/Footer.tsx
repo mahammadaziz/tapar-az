@@ -18,11 +18,11 @@ export default function Footer() {
           [t('category.daşınmaz_əmlak'), '/kateqoriyalar'],
           [t('category.iş_elanları'), '/kateqoriyalar'], [t('category.xidmətlər'), '/kateqoriyalar'],
         ]} />
-        <FooterCol title="Platform" links={[
+        <FooterCol title={t('platform')} links={[
           [t('placeAd'), '/elan-yerlesdir'], [t('aiListing'), '/ai-elan'],
           [t('favorites'), '/favoriler'], [t('messages'), '/mesajlar'],
         ]} />
-        <FooterCol title="Account" links={[[t('login'), '/login'], ['Register', '/register']]} />
+        <FooterCol title={t('account')} links={[[t('login'), '/login'], [t('register'), '/register']]} />
       </div>
     </footer>
   );

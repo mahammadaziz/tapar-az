@@ -6,7 +6,7 @@ import {
   SearchOutlined, ArrowRightOutlined, BulbFilled, CarOutlined, HomeOutlined, LaptopOutlined,
   ToolOutlined, GiftOutlined, TeamOutlined, SafetyCertificateOutlined,
 } from '@ant-design/icons';
-import { CATEGORIES } from '@/config/categories';
+import { CATEGORIES, categoryLabel } from '@/config/categories';
 import { useListings } from '@/hooks/useListings';
 import ListingCard from '@/components/ListingCard';
 import AdRail from '@/components/AdRail';
@@ -14,11 +14,13 @@ import ImageWatermark from '@/components/ImageWatermark';
 import { useTranslation } from 'react-i18next';
 import { db } from '@/firebase/config';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function Home() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { language } = useLanguage();
   const [q, setQ] = useState('');
   const [userCount, setUserCount] = useState<number | null>(null);
   const { listings: latest, loading: latestLoading } = useListings({ sort: 'newest' });
@@ -71,7 +73,7 @@ export default function Home() {
               <span className="category-image-wrap relative flex aspect-square w-full max-w-[116px] items-center justify-center overflow-hidden rounded-[18px] bg-[#f6f7f9] transition duration-500 group-hover:-translate-y-1 group-hover:bg-[#f1f2f5] group-hover:shadow-[0_8px_16px_rgba(17,24,39,.10)] sm:rounded-[20px]">
                 <img src={`/category-icons/${cat.image}.png`} alt="" className="h-[80%] w-[80%] object-contain transition duration-500 group-hover:scale-105" />
               </span>
-              <span className="mt-1 min-h-[2rem] max-w-[160px] px-1 font-display text-[12px] font-medium leading-[1.1] text-[#1f2937] transition group-hover:text-[#FE6C2C] sm:text-[13px]">{cat.label}</span>
+              <span className="mt-1 min-h-[2rem] max-w-[160px] px-1 font-display text-[12px] font-medium leading-[1.1] text-[#1f2937] transition group-hover:text-[#FE6C2C] sm:text-[13px]">{cat.key === 'stores' ? t('stores') : categoryLabel(cat.key, language)}</span>
             </Link>;
           })}
         </div>

@@ -7,9 +7,11 @@ import { useAuth } from '@/context/AuthContext';
 import { formatDateTime, formatPrice } from '@/utils/format';
 import { externalListingLabel } from '@/hooks/useExternalListings';
 import ImageWatermark from '@/components/ImageWatermark';
+import { useTranslation } from 'react-i18next';
 
 export default function ListingCard({ listing }: { listing: ExternalListing | Listing }) {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const { isFavorite, toggleFavorite } = useFavorites();
   const [favoriteOverride, setFavoriteOverride] = useState<boolean | null>(null);
   const external = 'source' in listing;
@@ -23,12 +25,12 @@ export default function ListingCard({ listing }: { listing: ExternalListing | Li
   const handleFavorite = async (event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
-    if (!user) return message.info('Sevimlilərə əlavə etmək üçün daxil olun.');
+    if (!user) return message.info(t('loginRequired'));
     const next = !fav;
     setFavoriteOverride(next);
     try { await toggleFavorite(listing.id); } catch (error) {
       setFavoriteOverride(null);
-      message.error(error instanceof Error ? error.message : 'Favoritə əlavə etmək mümkün olmadı.');
+      message.error(error instanceof Error ? error.message : t('favoriteError'));
     }
   };
 
@@ -44,13 +46,13 @@ export default function ListingCard({ listing }: { listing: ExternalListing | Li
       </div>
       <div className="p-3.5">
         <h3 className="min-h-[2.4em] text-[14px] font-bold leading-[1.25] tracking-[-.01em] text-ink transition-colors group-hover:text-action dark:text-white">{listing.title}</h3>
-        <div className="mt-2.5 flex items-end justify-between gap-2"><p className="text-[18px] font-extrabold tracking-[-.03em] text-ink dark:text-white">{listing.price === null ? 'Qiymət soruşun' : formatPrice(listing.price)}</p>{external && listing.listing_type && <span className="mb-0.5 rounded-md bg-offwhite px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-muted dark:bg-background">{listing.listing_type === 'sell' ? 'Satılır' : listing.listing_type}</span>}</div>
+        <div className="mt-2.5 flex items-end justify-between gap-2"><p className="text-[18px] font-extrabold tracking-[-.03em] text-ink dark:text-white">{listing.price === null ? t('priceAsk') : formatPrice(listing.price)}</p>{external && listing.listing_type && <span className="mb-0.5 rounded-md bg-offwhite px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-muted dark:bg-background">{listing.listing_type === 'sell' ? t('sale') : listing.listing_type}</span>}</div>
         <div className="mt-2.5 flex min-h-7 flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-muted">
-          <span className="inline-flex items-center gap-1"><EnvironmentOutlined /> {listing.city ?? 'Azərbaycan'}{external && listing.district ? `, ${listing.district}` : ''}</span>
-          {external && listing.rooms && <span>{listing.rooms} otaq</span>}
+          <span className="inline-flex items-center gap-1"><EnvironmentOutlined /> {listing.city ?? t('country')}{external && listing.district ? `, ${listing.district}` : ''}</span>
+          {external && listing.rooms && <span>{listing.rooms} {t('rooms')}</span>}
           {external && listing.area && <span>{listing.area} m²</span>}
           {external && listing.year && <span>{listing.year}</span>}
-          {external && listing.mileage !== null && listing.mileage !== undefined && <span>{listing.mileage.toLocaleString('az-AZ')} km</span>}
+          {external && listing.mileage !== null && listing.mileage !== undefined && <span>{listing.mileage.toLocaleString('az-AZ')} {t('km')}</span>}
         </div>
         <div className="mt-2 flex items-center"><span className="inline-flex items-center gap-1.5 text-[10px] text-muted"><CalendarOutlined /> {external && listing.published_at ? new Date(listing.published_at).toLocaleDateString('az-AZ') : formatDateTime('createdAt' in listing ? listing.createdAt : undefined)}</span></div>
       </div>

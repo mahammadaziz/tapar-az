@@ -29,20 +29,20 @@ export default function Header() {
   useEffect(() => { void reloadStore(); }, [location.pathname, reloadStore]);
 
   const storePath = store ? `/magaza/${store.slug}` : '/magaza-yarat';
-  const storeLabel = store ? 'Mağazam' : 'Mağaza yarat';
+  const storeLabel = store ? t('storeMine') : t('storeCreate');
 
   const handleSearch = () => {
     navigate(`/elanlar${searchValue ? `?q=${encodeURIComponent(searchValue)}` : ''}`);
   };
 
   const userMenuItems = [
-    { key: 'profile', label: <Link to="/profil">Profil</Link> },
-    { key: 'listings', label: <Link to="/profil/elanlarim">Mənim elanlarım</Link> },
-    { key: 'favorites', label: <Link to="/favoriler">Sevimlilər</Link> },
+    { key: 'profile', label: <Link to="/profil">{t('profile')}</Link> },
+    { key: 'listings', label: <Link to="/profil/elanlarim">{t('myListings')}</Link> },
+    { key: 'favorites', label: <Link to="/favoriler">{t('favorites')}</Link> },
     { key: 'store', label: <Link to={storePath}>{storeLabel}</Link> },
     { key: 'messages', label: <Link to="/mesajlar">Mesajlar</Link> },
     { type: 'divider' as const },
-    { key: 'logout', label: 'Çıxış', onClick: () => logout() },
+    { key: 'logout', label: t('logout'), onClick: () => logout() },
   ];
 
   return (
@@ -58,9 +58,9 @@ export default function Header() {
             <NavLink to="/" end className={navLinkClass}>{t('home')}</NavLink>
             <NavLink to="/elanlar" className={navLinkClass}>{t('listings')}</NavLink>
             <NavLink to="/kateqoriyalar" className={navLinkClass}>{t('categories')}</NavLink>
-            <NavLink to="/magazalar" className={navLinkClass}>Mağazalar</NavLink>
+            <NavLink to="/magazalar" className={navLinkClass}>{t('stores')}</NavLink>
             <NavLink to={storePath} className={navLinkClass}>{storeLabel}</NavLink>
-            {isAdmin && <Link to="/admin" className="inline-flex items-center gap-1 rounded-lg bg-action px-2.5 py-2 text-xs font-bold text-white transition hover:bg-[#e84f00]"><SettingOutlined /> Admin</Link>}
+            {isAdmin && <Link to="/admin" className="inline-flex items-center gap-1 rounded-lg bg-action px-2.5 py-2 text-xs font-bold text-white transition hover:bg-[#e84f00]"><SettingOutlined /> {t('admin')}</Link>}
           </nav>
 
           <div className="min-w-0 max-w-[280px] flex-1">
