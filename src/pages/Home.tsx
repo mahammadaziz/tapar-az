@@ -9,7 +9,6 @@ import {
 import { CATEGORIES, categoryLabel } from '@/config/categories';
 import { useListings } from '@/hooks/useListings';
 import ListingCard from '@/components/ListingCard';
-import AdRail from '@/components/AdRail';
 import ImageWatermark from '@/components/ImageWatermark';
 import { useTranslation } from 'react-i18next';
 import { db } from '@/firebase/config';
@@ -33,8 +32,6 @@ export default function Home() {
 
   return (
     <div className="home-page w-full min-w-0 overflow-x-hidden">
-      <div className="home-with-ads mx-auto flex w-full max-w-[1840px] items-start gap-6 px-4 xl:gap-8">
-      <AdRail side="left" />
       <div className="home-content min-w-0 flex-1">
       {/* HERO */}
       {/* <section className="w-full min-w-0 overflow-visible bg-[#FF6C2C]">
@@ -101,8 +98,6 @@ export default function Home() {
 
   
 
-      </div>
-      <AdRail side="right" />
       </div>
     </div>
   );
