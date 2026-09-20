@@ -72,35 +72,35 @@ export default function Home() {
       </section> */}
 
       {/* POPULAR CATEGORIES */}
-      <section className="popular-categories-section mx-auto w-full max-w-[1480px] bg-[transparent] px-4 py-6 shadow-[0_8px_30px_rgba(17,24,39,.04)] sm:px-6 md:px-8 md:py-8">
+      <section className="popular-categories-section mx-auto w-full max-w-[1480px] bg-[transparent] px-2 py-3 shadow-[0_8px_30px_rgba(17,24,39,.04)] sm:px-6 md:px-8 md:py-8">
      
-        <div className="popular-categories-grid mx-auto mt-4 max-w-[1280px]">
+        <div className="popular-categories-grid mx-auto mt-2 max-w-[1280px] sm:mt-4">
           {POPULAR_CATEGORIES.map((cat, index) => {
             const href = cat.key === 'stores' ? '/magazalar' : `/elanlar?category=${encodeURIComponent(cat.key)}`;
             return <Link key={cat.key} to={href} style={{ animationDelay: `${index * 55}ms` }} className="category-card-reveal group flex min-w-0 flex-col items-center text-center">
-              <span className="category-image-wrap relative flex aspect-square w-full max-w-[116px] items-center justify-center overflow-hidden rounded-[18px] bg-[#f6f7f9] transition duration-500 group-hover:-translate-y-1 group-hover:bg-[#f1f2f5] group-hover:shadow-[0_8px_16px_rgba(17,24,39,.10)] sm:rounded-[20px]">
+              <span className="category-image-wrap relative flex aspect-square w-full max-w-[72px] items-center justify-center overflow-hidden rounded-[14px] bg-[#f6f7f9] transition duration-500 group-hover:-translate-y-1 group-hover:bg-[#f1f2f5] group-hover:shadow-[0_8px_16px_rgba(17,24,39,.10)] sm:max-w-[100px] sm:rounded-[18px] md:max-w-[116px] md:rounded-[20px]">
                 <img src={`/category-icons/${cat.image}.png`} alt="" className="h-[80%] w-[80%] object-contain transition duration-500 group-hover:scale-105" />
               </span>
-              <span className="mt-1 min-h-[2rem] max-w-[160px] px-1 font-display text-[12px] font-medium leading-[1.1] text-[#1f2937] transition group-hover:text-[#FE6C2C] sm:text-[13px]">{cat.key === 'stores' ? t('stores') : categoryLabel(cat.key, language)}</span>
+              <span className="mt-1 line-clamp-2 min-h-[1.9rem] max-w-[96px] px-0.5 font-display text-[10px] font-medium leading-[1.05] text-[#1f2937] transition group-hover:text-[#FE6C2C] sm:max-w-[140px] sm:text-[13px]">{cat.key === 'stores' ? t('stores') : categoryLabel(cat.key, language)}</span>
             </Link>;
           })}
         </div>
-        <Link to="/kateqoriyalar" className="mt-7 inline-flex rounded-full border border-[#FE6C2C]/25 px-4 py-2 text-sm font-bold text-[#FE6C2C] transition hover:bg-[#FE6C2C] hover:text-white sm:hidden">Hamısına bax</Link>
+        <Link to="/kateqoriyalar" className="mt-5 inline-flex rounded-full border border-[#FE6C2C]/25 px-3.5 py-1.5 text-xs font-bold text-[#FE6C2C] transition hover:bg-[#FE6C2C] hover:text-white sm:hidden">Hamısına bax</Link>
       </section>
 
       {/* LATEST LISTINGS */}
-      <section className="max-w-7xl mx-auto px-6 py-6">
+      <section className="mx-auto max-w-7xl px-3 py-5 sm:px-6 sm:py-6">
         <SectionHeading title={t('latest')} linkTo="/elanlar" />
         <ListingGrid listings={latest} loading={latestLoading} />
       </section>
 
       {/* TRUST */}
-      <section className="max-w-7xl mx-auto px-6 py-4 md:py-10">
-        <div className="mb-5">
+      <section className="mx-auto max-w-7xl px-3 py-5 sm:px-6 md:py-10">
+        <div className="mb-4 md:mb-5">
           <p className="market-section-label mb-2">{t('why')}</p>
           <h2 className="font-display text-2xl md:text-3xl font-bold tracking-tight text-ink dark:text-white">{t('trustTitle')}</h2>
         </div>
-        <div className="market-surface grid grid-cols-1 md:grid-cols-3 gap-6 p-6 md:p-8">
+        <div className="market-surface grid grid-cols-1 gap-4 p-4 md:grid-cols-3 md:gap-6 md:p-8">
           <TrustItem icon={<SafetyCertificateOutlined />} title={t('trust1')} text={t('trustText1')} />
           <TrustItem icon={<SearchOutlined />} title={t('trust2')} text={t('trustText2')} />
           <TrustItem icon={<TeamOutlined />} title={t('trust3')} text={t('trustText3')} />
@@ -186,7 +186,7 @@ function ListingGrid({ listings, loading }: { listings: import('@/types').Listin
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
-      {listings.slice(0, 8).map((l) => <ListingCard key={l.id} listing={l} />)}
+      {listings.map((l) => <ListingCard key={l.id} listing={l} />)}
     </div>
   );
 }
