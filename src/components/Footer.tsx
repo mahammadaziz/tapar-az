@@ -15,7 +15,7 @@ export default function Footer() {
           </p>
         </div>
         <FooterCol title={t('categories')} links={[
-          [t('cars'), '/avtomobiller'], [t('category.daşınmaz_əmlak'), '/kateqoriyalar'],
+          [t('category.daşınmaz_əmlak'), '/kateqoriyalar'],
           [t('category.iş_elanları'), '/kateqoriyalar'], [t('category.xidmətlər'), '/kateqoriyalar'],
         ]} />
         <FooterCol title="Platform" links={[
