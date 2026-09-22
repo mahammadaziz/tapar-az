@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Carousel, Input, Skeleton } from 'antd';
 import { collection, getCountFromServer } from 'firebase/firestore';
@@ -6,22 +6,35 @@ import {
   SearchOutlined, ArrowRightOutlined, BulbFilled, CarOutlined, HomeOutlined, LaptopOutlined,
   ToolOutlined, GiftOutlined, TeamOutlined, SafetyCertificateOutlined,
 } from '@ant-design/icons';
-import { CATEGORIES } from '@/config/categories';
+import { CATEGORIES, categoryLabel } from '@/config/categories';
 import { useListings } from '@/hooks/useListings';
 import ListingCard from '@/components/ListingCard';
+import ImageWatermark from '@/components/ImageWatermark';
 import { useTranslation } from 'react-i18next';
 import { db } from '@/firebase/config';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function Home() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { language } = useLanguage();
   const [q, setQ] = useState('');
   const [userCount, setUserCount] = useState<number | null>(null);
-  const { listings: latest, loading: latestLoading } = useListings({ sort: 'newest' });
-  const { listings: cars, loading: carsLoading } = useListings({ category: 'nəqliyyat', sort: 'newest' });
+  const latestLoadMoreRef = useRef<HTMLDivElement | null>(null);
+  const { listings: latest, loading: latestLoading, loadingMore: latestLoadingMore, hasMore: latestHasMore, loadMore: loadMoreLatest } = useListings({ sort: 'newest' });
   const latestSix = latest.slice(0, 6);
+
+  useEffect(() => {
+    const target = latestLoadMoreRef.current;
+    if (!target) return undefined;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting) loadMoreLatest();
+    }, { rootMargin: '500px 0px' });
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [loadMoreLatest]);
 
   useEffect(() => {
     if (!user) { setUserCount(null); return; }
@@ -29,9 +42,10 @@ export default function Home() {
   }, [user]);
 
   return (
-    <div className="w-full min-w-0 overflow-x-hidden">
+    <div className="home-page w-full min-w-0 overflow-x-hidden">
+      <div className="home-content min-w-0 flex-1">
       {/* HERO */}
-      <section className="w-full min-w-0 overflow-visible bg-[#FF6C2C]">
+      {/* <section className="w-full min-w-0 overflow-visible bg-[#FF6C2C]">
         <div className="mx-auto grid w-full max-w-full min-w-0 grid-cols-1 items-center gap-10 px-4 py-10 sm:px-6 md:py-16 lg:max-w-7xl lg:grid-cols-[minmax(0,1fr)_minmax(360px,500px)] lg:gap-16">
           <div className="relative z-10"><p className="mb-4 text-xs font-bold uppercase tracking-[.22em] text-white/85">{t('heroKicker')}</p><h1 className="max-w-2xl font-display text-4xl font-bold leading-[1.05] tracking-tightest text-white md:text-6xl">{t('heroTitle')}</h1><p className="mt-5 max-w-xl text-base leading-7 text-white/85 md:text-lg">{t('heroText')}</p>
             <div className="mt-8 flex max-w-2xl gap-2 rounded-2xl border border-line bg-paper p-1.5 shadow-[0_14px_35px_rgba(255,90,0,.12)] dark:border-line-dark dark:bg-background"><Input size="large" bordered={false} placeholder={t('searchPlaceholder')} value={q} onChange={(e) => setQ(e.target.value)} onPressEnter={() => navigate(`/elanlar${q ? `?q=${encodeURIComponent(q)}` : ''}`)} className="flex-1 !bg-transparent" /><button onClick={() => navigate(`/elanlar${q ? `?q=${encodeURIComponent(q)}` : ''}`)} className="market-action rounded-xl px-5"><SearchOutlined /> {t('search')}</button></div>
@@ -55,51 +69,59 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* POPULAR CATEGORIES */}
-      <section className="mx-auto max-w-7xl bg-white px-6 py-14 md:px-8">
-        <div className="flex items-end justify-between gap-4">
-          <div><p className="mb-2 text-xs font-bold uppercase tracking-[.18em] text-[#FE6C2C]">Tapar.az seçimi</p><SectionHeading title={t('popularCategories')} /></div>
-          <Link to="/kateqoriyalar" className="hidden rounded-full border border-[#FE6C2C]/25 px-4 py-2 text-sm font-bold text-[#FE6C2C] transition hover:bg-[#FE6C2C] hover:text-white sm:inline-flex">Hamısına bax</Link>
-        </div>
-        <div className="mt-7 grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
-          {CATEGORIES.map((cat, index) => {
-            return <Link key={cat.key} to={`/elanlar?category=${cat.key}`} style={{ animationDelay: `${index * 70}ms` }} className="category-card-reveal group relative flex h-24 items-center gap-2 overflow-hidden rounded-xl border border-[#E7E7E7] bg-white px-3 shadow-[0_8px_16px_rgba(17,24,39,.08)] transition duration-500 hover:-translate-y-1 hover:border-[#FE6C2C]/35 hover:shadow-[0_14px_26px_rgba(254,108,44,.22)]"><div className="absolute -right-8 -top-8 z-0 h-28 w-28 rounded-full bg-[#FE6C2C]/75 opacity-0 blur-[1px] transition duration-500 group-hover:opacity-100 group-hover:scale-125" /><CategoryIcon name={cat.icon} /><p className="relative z-10 min-w-0 flex-1 pr-10 font-display text-xs font-bold leading-tight text-black sm:text-sm">{cat.label}</p><span className="absolute right-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-[#FE6C2C] text-[10px] font-extrabold text-white shadow-md transition duration-500 group-hover:rotate-6 group-hover:bg-white group-hover:text-[#FE6C2C]">{index + 1}</span></Link>;
+      <section className="popular-categories-section mx-auto w-full max-w-[1480px] bg-[transparent] px-2 py-3 shadow-[0_8px_30px_rgba(17,24,39,.04)] sm:px-6 md:px-8 md:py-8">
+     
+        <div className="popular-categories-grid mx-auto mt-2 max-w-[1280px] sm:mt-4">
+          {POPULAR_CATEGORIES.map((cat, index) => {
+            const href = cat.key === 'stores' ? '/magazalar' : `/elanlar?category=${encodeURIComponent(cat.key)}`;
+            return <Link key={cat.key} to={href} style={{ animationDelay: `${index * 55}ms` }} className="category-card-reveal group flex min-w-0 flex-col items-center text-center">
+              <span className="category-image-wrap relative flex aspect-square w-full max-w-[72px] items-center justify-center overflow-hidden rounded-[14px] bg-[#f6f7f9] transition duration-500 group-hover:-translate-y-1 group-hover:bg-[#f1f2f5] group-hover:shadow-[0_8px_16px_rgba(17,24,39,.10)] sm:max-w-[100px] sm:rounded-[18px] md:max-w-[116px] md:rounded-[20px]">
+                <img src={`/category-icons/${cat.image}.png`} alt="" className="h-[80%] w-[80%] object-contain transition duration-500 group-hover:scale-105" />
+              </span>
+              <span className="mt-1 line-clamp-2 min-h-[1.9rem] max-w-[96px] px-0.5 font-display text-[10px] font-medium leading-[1.05] text-[#1f2937] transition group-hover:text-[#FE6C2C] sm:max-w-[140px] sm:text-[13px]">{cat.key === 'stores' ? t('stores') : categoryLabel(cat.key, language)}</span>
+            </Link>;
           })}
         </div>
-        <Link to="/kateqoriyalar" className="mt-5 inline-flex rounded-full border border-[#FE6C2C]/25 px-4 py-2 text-sm font-bold text-[#FE6C2C] transition hover:bg-[#FE6C2C] hover:text-white sm:hidden">Hamısına bax</Link>
+        <Link to="/kateqoriyalar" className="mt-5 inline-flex rounded-full border border-[#FE6C2C]/25 px-3.5 py-1.5 text-xs font-bold text-[#FE6C2C] transition hover:bg-[#FE6C2C] hover:text-white sm:hidden">Hamısına bax</Link>
       </section>
 
       {/* LATEST LISTINGS */}
-      <section className="max-w-7xl mx-auto px-6 py-6">
+      <section className="mx-auto max-w-7xl px-3 py-5 sm:px-6 sm:py-6">
         <SectionHeading title={t('latest')} linkTo="/elanlar" />
         <ListingGrid listings={latest} loading={latestLoading} />
       </section>
 
       {/* TRUST */}
-      <section className="max-w-7xl mx-auto px-6 py-4 md:py-10">
-        <div className="mb-5">
+      <section className="mx-auto max-w-7xl px-3 py-5 sm:px-6 md:py-10">
+        <div className="mb-4 md:mb-5">
           <p className="market-section-label mb-2">{t('why')}</p>
           <h2 className="font-display text-2xl md:text-3xl font-bold tracking-tight text-ink dark:text-white">{t('trustTitle')}</h2>
         </div>
-        <div className="market-surface grid grid-cols-1 md:grid-cols-3 gap-6 p-6 md:p-8">
+        <div className="market-surface grid grid-cols-1 gap-4 p-4 md:grid-cols-3 md:gap-6 md:p-8">
           <TrustItem icon={<SafetyCertificateOutlined />} title={t('trust1')} text={t('trustText1')} />
           <TrustItem icon={<SearchOutlined />} title={t('trust2')} text={t('trustText2')} />
           <TrustItem icon={<TeamOutlined />} title={t('trust3')} text={t('trustText3')} />
         </div>
       </section>
 
+      {latestHasMore && <div ref={latestLoadMoreRef} className="flex min-h-12 items-center justify-center px-6 pb-8 text-sm text-muted">{latestLoadingMore ? t('loading') : ''}</div>}
+
   
 
-      {/* POPULAR AUTOMOBILES */}
-      <section className="max-w-7xl mx-auto px-6 pb-16">
-        <SectionHeading title={t('popularCars')} linkTo="/avtomobiller" />
-        <ListingGrid listings={cars} loading={carsLoading} />
-      </section>
+      </div>
     </div>
   );
 }
+
+const POPULAR_CATEGORIES = [
+  ...['ev_bağ', 'nəqliyyat', 'elektronika', 'ehtiyat_hissələri', 'daşınmaz_əmlak', 'xidmətlər', 'şəxsi_əşyalar', 'hobbi_asudə', 'məişət_texnikası', 'telefonlar', 'uşaq_aləmi', 'iş_elanları', 'heyvanlar']
+    .map((key) => CATEGORIES.find((category) => category.key === key))
+    .filter((category): category is (typeof CATEGORIES)[number] => Boolean(category?.image)),
+  { key: 'stores', label: 'Mağazalar', image: 'stores' },
+];
 
 function HeroStat({ value, label, delay }: { value: string; label: string; delay: string }) {
   return <div style={{ animationDelay: delay }} className="hero-stat-float pointer-events-auto flex h-[88px] w-[88px] shrink-0 cursor-default flex-col items-center justify-center rounded-full border-2 border-[#16A34A]/25 bg-white text-center shadow-[0_12px_28px_rgba(22,163,74,.2)] transition duration-300 hover:scale-110 hover:border-[#16A34A]/60 hover:shadow-[0_18px_42px_rgba(22,163,74,.42)] sm:h-[104px] sm:w-[104px]"><p className="font-display text-xl font-extrabold leading-none text-[#16A34A] sm:text-2xl">{value}</p><p className="mt-2 max-w-[80px] text-[9px] font-semibold leading-tight text-ink/70 sm:text-[10px]">{label}</p></div>;
@@ -107,7 +129,7 @@ function HeroStat({ value, label, delay }: { value: string; label: string; delay
 
 function HeroListing({ listing }: { listing: import('@/types').Listing }) {
   const image = listing.media?.find((item) => item.type === 'image')?.url ?? listing.media?.[0]?.url;
-  return <Link to={`/elanlar/${listing.id}`} className="group block overflow-hidden rounded-[1.35rem] border border-line bg-white shadow-[0_12px_32px_rgba(17,24,39,.1)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(17,24,39,.15)] dark:border-line-dark dark:bg-graphite"><div className="relative aspect-[1.8] overflow-hidden rounded-t-[1.35rem] bg-[#eee8e2] dark:bg-background">{image ? <img src={image} alt={listing.title} className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-105" /> : <div className="flex h-full items-center justify-center text-sm text-muted">Şəkil yoxdur</div>}</div><div className="rounded-b-[1.35rem] p-3"><h3 className="line-clamp-2 font-display text-base font-bold leading-tight text-ink transition group-hover:text-[#16A34A] dark:text-white">{listing.title}</h3></div></Link>;
+  return <Link to={`/elanlar/${listing.id}`} className="group block overflow-hidden rounded-[1.35rem] border border-line bg-white shadow-[0_12px_32px_rgba(17,24,39,.1)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(17,24,39,.15)] dark:border-line-dark dark:bg-graphite"><div className="relative aspect-[1.8] overflow-hidden rounded-t-[1.35rem] bg-[#eee8e2] dark:bg-background">{image ? <><img src={image} alt={listing.title} className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-105" /><ImageWatermark /></> : <div className="flex h-full items-center justify-center text-sm text-muted">Şəkil yoxdur</div>}</div><div className="rounded-b-[1.35rem] p-3"><h3 className="line-clamp-2 font-display text-base font-bold leading-tight text-ink transition group-hover:text-[#16A34A] dark:text-white">{listing.title}</h3></div></Link>;
 }
 
 function TrustItem({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
@@ -164,7 +186,7 @@ function ListingGrid({ listings, loading }: { listings: import('@/types').Listin
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
-      {listings.slice(0, 8).map((l) => <ListingCard key={l.id} listing={l} />)}
+      {listings.map((l) => <ListingCard key={l.id} listing={l} />)}
     </div>
   );
 }

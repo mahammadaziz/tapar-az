@@ -11,18 +11,18 @@ export default function Footer() {
             TAPAR<span className="text-action">.AZ</span>
           </div>
           <p className="text-sm text-secondary dark:text-muted leading-relaxed">
-            {t('heroText')}
+            {t('footerDescription')}
           </p>
         </div>
         <FooterCol title={t('categories')} links={[
-          [t('cars'), '/avtomobiller'], [t('category.daşınmaz_əmlak'), '/kateqoriyalar'],
+          [t('category.daşınmaz_əmlak'), '/kateqoriyalar'],
           [t('category.iş_elanları'), '/kateqoriyalar'], [t('category.xidmətlər'), '/kateqoriyalar'],
         ]} />
-        <FooterCol title="Platform" links={[
+        <FooterCol title={t('platform')} links={[
           [t('placeAd'), '/elan-yerlesdir'], [t('aiListing'), '/ai-elan'],
           [t('favorites'), '/favoriler'], [t('messages'), '/mesajlar'],
         ]} />
-        <FooterCol title="Account" links={[[t('login'), '/login'], ['Register', '/register']]} />
+        <FooterCol title={t('account')} links={[[t('login'), '/login'], [t('register'), '/register']]} />
       </div>
     </footer>
   );

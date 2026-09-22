@@ -1,5 +1,4 @@
 export type CategoryKey =
-  | 'avtomobiller'
   | 'ev_bağ'
   | 'elektronika'
   | 'nəqliyyat'

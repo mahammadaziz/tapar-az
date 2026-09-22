@@ -122,6 +122,41 @@ body {
   animation: category-card-reveal .65s cubic-bezier(.22, 1, .36, 1) both;
 }
 
+.popular-categories-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .65rem .25rem;
+  justify-items: center;
+}
+
+@media (min-width: 640px) {
+  .popular-categories-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1.25rem .75rem; }
+}
+
+@media (min-width: 768px) {
+  .popular-categories-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.5rem 1.25rem; }
+}
+
+@media (min-width: 1024px) {
+  .popular-categories-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 1.75rem 1.5rem; }
+}
+
+@media (min-width: 1280px) {
+  .popular-categories-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2rem 1.75rem; }
+}
+
+@media (min-width: 1536px) {
+  .popular-categories-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2rem 1.75rem; }
+}
+
+.home-with-ads > .home-content {
+  width: min(100%, 1480px);
+}
+
+@media (min-width: 1280px) {
+  .home-with-ads { padding-left: 0; padding-right: 0; }
+}
+
 /* Centralized marketplace styling for all Ant Design controls. */
 .ant-btn {
   border-radius: 8px !important;

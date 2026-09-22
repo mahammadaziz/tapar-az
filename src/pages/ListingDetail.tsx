@@ -13,6 +13,7 @@ import ListingCard from '@/components/ListingCard';
 import { getCategory, getSubcategory } from '@/config/categories';
 import { formatDateTime, formatFullDateTime, formatPrice } from '@/utils/format';
 import { useTranslation } from 'react-i18next';
+import ImageWatermark from '@/components/ImageWatermark';
 
 export default function ListingDetail() {
   const { id } = useParams<{ id: string }>();
@@ -20,8 +21,6 @@ export default function ListingDetail() {
   const { listing, loading, error } = useListing(id);
   const [activeMedia, setActiveMedia] = useState(0);
   const [showPhone, setShowPhone] = useState(false);
-  const [mediaHover, setMediaHover] = useState(false);
-  const [mediaCursor, setMediaCursor] = useState({ x: 0, y: 0 });
 
   const { listings: similar } = useListings({ category: listing?.category, sort: 'newest' });
 
@@ -66,18 +65,12 @@ export default function ListingDetail() {
         <div>
           <div
             className="group market-surface relative aspect-[4/3] bg-offwhite dark:bg-graphite overflow-hidden cursor-none"
-            onMouseEnter={() => setMediaHover(true)}
-            onMouseLeave={() => setMediaHover(false)}
-            onMouseMove={(event) => {
-              const bounds = event.currentTarget.getBoundingClientRect();
-              setMediaCursor({ x: event.clientX - bounds.left + 16, y: event.clientY - bounds.top + 16 });
-            }}
           >
             {current ? (
               current.type === 'video' ? (
                 <video src={current.url} controls className="w-full h-full object-contain" />
               ) : (
-                <img src={current.url} alt={listing.title} className="w-full h-full object-contain" />
+                <><img src={current.url} alt={listing.title} className="w-full h-full object-contain" /><ImageWatermark /></>
               )
             ) : (
               <div className="w-full h-full flex items-center justify-center text-muted">Şəkil yoxdur</div>
@@ -102,14 +95,6 @@ export default function ListingDetail() {
                 </button>
               </>
             )}
-            {mediaHover && (
-              <span
-                className="pointer-events-none absolute z-20 rounded-md bg-[#111827]/90 px-2.5 py-1 text-[11px] font-bold tracking-wide text-white shadow-lg"
-                style={{ left: mediaCursor.x, top: mediaCursor.y }}
-              >
-                TAPAR.AZ
-              </span>
-            )}
           </div>
           {media.length > 1 && (
             <div className="flex gap-2 mt-3 overflow-x-auto">
@@ -122,7 +107,7 @@ export default function ListingDetail() {
                   {m.type === 'video' ? (
                     <video src={m.url} className="w-full h-full object-cover" muted />
                   ) : (
-                    <img src={m.url} alt="" className="w-full h-full object-cover" />
+                    <div className="relative h-full w-full"><img src={m.url} alt="" className="w-full h-full object-cover" /><ImageWatermark /></div>
                   )}
                 </button>
               ))}

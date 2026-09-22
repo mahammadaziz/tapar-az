@@ -8,7 +8,6 @@ import Listings from '@/pages/Listings';
 import ListingDetail from '@/pages/ListingDetail';
 import CreateListing from '@/pages/CreateListing';
 import AIListing from '@/pages/AIListing';
-import Automobiles from '@/pages/Automobiles';
 import Categories from '@/pages/Categories';
 import Favorites from '@/pages/Favorites';
 import Profile from '@/pages/Profile';
@@ -45,7 +44,6 @@ export default function App() {
               <Route path="/magazalar" element={<Stores />} />
               <Route path="/magaza-yarat" element={<ProtectedRoute><CreateStore /></ProtectedRoute>} />
               <Route path="/ai-elan" element={<AIListing />} />
-              <Route path="/avtomobiller" element={<Automobiles />} />
               <Route path="/kateqoriyalar" element={<Categories />} />
               <Route path="/favoriler" element={<Favorites />} />
               <Route path="/profil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

@@ -29,53 +29,53 @@ export default function Header() {
   useEffect(() => { void reloadStore(); }, [location.pathname, reloadStore]);
 
   const storePath = store ? `/magaza/${store.slug}` : '/magaza-yarat';
-  const storeLabel = store ? 'Mağazam' : 'Mağaza yarat';
+  const storeLabel = store ? t('storeMine') : t('storeCreate');
 
   const handleSearch = () => {
     navigate(`/elanlar${searchValue ? `?q=${encodeURIComponent(searchValue)}` : ''}`);
   };
 
   const userMenuItems = [
-    { key: 'profile', label: <Link to="/profil">Profil</Link> },
-    { key: 'listings', label: <Link to="/profil/elanlarim">Mənim elanlarım</Link> },
-    { key: 'favorites', label: <Link to="/favoriler">Sevimlilər</Link> },
+    { key: 'profile', label: <Link to="/profil">{t('profile')}</Link> },
+    { key: 'listings', label: <Link to="/profil/elanlarim">{t('myListings')}</Link> },
+    { key: 'favorites', label: <Link to="/favoriler">{t('favorites')}</Link> },
     { key: 'store', label: <Link to={storePath}>{storeLabel}</Link> },
     { key: 'messages', label: <Link to="/mesajlar">Mesajlar</Link> },
     { type: 'divider' as const },
-    { key: 'logout', label: 'Çıxış', onClick: () => logout() },
+    { key: 'logout', label: t('logout'), onClick: () => logout() },
   ];
 
   return (
     <>
       {/* Desktop / tablet header */}
       <header className="hidden md:block sticky top-0 z-40 bg-paper/95 dark:bg-offwhite/95 backdrop-blur border-b border-line dark:border-line-dark shadow-[0_2px_12px_rgba(17,24,39,0.04)]">
-        <div className="mx-auto flex h-16 max-w-[1600px] items-center gap-4 px-4 xl:gap-6 xl:px-6">
+        <div className="mx-auto grid h-16 max-w-[1840px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 px-4 xl:gap-6 xl:px-6">
           <Link to="/" className="font-display text-xl font-bold tracking-tightest text-ink dark:text-white shrink-0">
             <span className="text-ink dark:text-white">TAPAR</span><span className="text-action">.AZ</span>
           </Link>
 
-          <nav className="flex shrink-0 items-center gap-3 lg:gap-4 xl:gap-5">
+          <nav className="flex min-w-0 items-center justify-self-center gap-3 lg:gap-4 xl:gap-5">
             <NavLink to="/" end className={navLinkClass}>{t('home')}</NavLink>
             <NavLink to="/elanlar" className={navLinkClass}>{t('listings')}</NavLink>
-            <NavLink to="/avtomobiller" className={navLinkClass}>{t('cars')}</NavLink>
             <NavLink to="/kateqoriyalar" className={navLinkClass}>{t('categories')}</NavLink>
-            <NavLink to="/favoriler" className={navLinkClass}>{t('favorites')}</NavLink>
-            <NavLink to="/magazalar" className={navLinkClass}>Mağazalar</NavLink>
+            <NavLink to="/magazalar" className={navLinkClass}>{t('stores')}</NavLink>
             <NavLink to={storePath} className={navLinkClass}>{storeLabel}</NavLink>
-            {isAdmin && <Link to="/admin" className="inline-flex items-center gap-1 rounded-lg bg-action px-2.5 py-2 text-xs font-bold text-white transition hover:bg-[#e84f00]"><SettingOutlined /> Admin</Link>}
+            {isAdmin && <Link to="/admin" className="inline-flex items-center gap-1 rounded-lg bg-action px-2.5 py-2 text-xs font-bold text-white transition hover:bg-[#e84f00]"><SettingOutlined /> {t('admin')}</Link>}
           </nav>
 
-          <div className="min-w-0 max-w-[280px] flex-1">
-            <Input
-              placeholder={t('searchPlaceholder')}
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              onPressEnter={handleSearch}
-              suffix={<SearchOutlined className="cursor-pointer text-action" onClick={handleSearch} />}
-            />
-          </div>
+          <div className="min-w-0 flex items-center justify-end gap-3">
+            <div className="min-w-0 w-[220px] xl:w-[280px]">
+              <Input
+                placeholder={t('searchPlaceholder')}
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                onPressEnter={handleSearch}
+                suffix={<SearchOutlined className="cursor-pointer text-action" onClick={handleSearch} />}
+              />
+            </div>
 
-          <div className="flex items-center gap-3 shrink-0">
+            <div className="flex shrink-0 items-center gap-3">
+            <Link to="/favoriler" aria-label="Favorilər" title="Favorilər" className="text-muted hover:text-action text-lg transition-colors"><HeartOutlined /></Link>
             {user && (
               <Link to="/mesajlar" aria-label="Mesajlar" title="Mesajlar" className="relative text-muted hover:text-action text-lg transition-colors">
                 <MessageOutlined />
@@ -97,6 +97,7 @@ export default function Header() {
             ) : (
               <Link to="/login" className="text-sm font-medium hover:opacity-70">{t('login')}</Link>
             )}
+            </div>
           </div>
         </div>
       </header>
@@ -108,6 +109,7 @@ export default function Header() {
             <span className="text-ink dark:text-white">TAPAR</span><span className="text-action">.AZ</span>
           </Link>
           <div className="flex items-center gap-4">
+            <Link to="/favoriler" aria-label="Favorilər" title="Favorilər" className="text-lg text-muted hover:text-action"><HeartOutlined /></Link>
             {user && <Link to="/mesajlar" aria-label="Mesajlar" className="relative text-lg text-muted hover:text-action"><MessageOutlined />{unreadCount > 0 && <span className="absolute -right-2 -top-2 min-w-4 rounded-full bg-urgent px-1 text-center text-[10px] leading-4 text-white">{unreadCount > 99 ? '99+' : unreadCount}</span>}</Link>}
             <Select aria-label="Language" size="small" value={language} onChange={setLanguage} options={[{ value: 'az', label: 'AZ' }, { value: 'en', label: 'EN' }, { value: 'ru', label: 'RU' }]} className="w-[68px]" />
           </div>

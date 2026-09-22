@@ -5,10 +5,15 @@ import { collection, getDocs } from 'firebase/firestore';
 import { EnvironmentOutlined, SearchOutlined, SafetyCertificateFilled, ShopOutlined } from '@ant-design/icons';
 import { db } from '@/firebase/config';
 import { CATEGORIES } from '@/config/categories';
+import { categoryLabel } from '@/config/categories';
+import { useLanguage } from '@/context/LanguageContext';
+import { useTranslation } from 'react-i18next';
 import { useStoreFollow } from '@/hooks/useStoreFollow';
 import type { Store as StoreType } from '@/types';
 
 export default function Stores() {
+  const { t } = useTranslation();
+  const { language } = useLanguage();
   const [stores, setStores] = useState<StoreType[]>([]);
   const [term, setTerm] = useState('');
   const [category, setCategory] = useState<string>();
@@ -18,7 +23,7 @@ export default function Stores() {
     const query = term.trim().toLocaleLowerCase('az-AZ');
     return stores.filter((store) => (!query || `${store.name} ${store.description}`.toLocaleLowerCase('az-AZ').includes(query)) && (!category || store.category === category));
   }, [category, stores, term]);
-  return <main className="min-h-screen bg-offwhite pb-20 dark:bg-background"><div className="mx-auto max-w-7xl px-6 py-10 md:py-14"><div className="mb-8"><p className="market-section-label mb-2">TAPAR.AZ marketplace</p><h1 className="font-display text-4xl font-bold tracking-tight text-ink dark:text-white">Mağazalar</h1><p className="mt-2 text-muted">Sevdiyiniz mağazaları izləyin və yeni elanlardan xəbərdar olun.</p></div><div className="mb-8 flex flex-col gap-3 rounded-2xl border border-line bg-paper p-4 md:flex-row dark:border-line-dark dark:bg-graphite"><Input size="large" prefix={<SearchOutlined className="text-muted" />} value={term} onChange={(event) => setTerm(event.target.value)} placeholder="Mağaza axtarışı" className="md:max-w-xl" /><Select allowClear size="large" value={category} onChange={setCategory} placeholder="Kateqoriya" options={CATEGORIES.map((item) => ({ value: item.key, label: item.label }))} className="md:w-72" /></div>{loading ? <div className="flex justify-center py-24"><Spin size="large" /></div> : filtered.length === 0 ? <Empty className="py-24" description="Mağaza tapılmadı" /> : <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">{filtered.map((store) => <StoreCard key={store.id} store={store} />)}</div>}</div></main>;
+  return <main className="min-h-screen bg-offwhite pb-20 dark:bg-background"><div className="mx-auto max-w-7xl px-6 py-10 md:py-14"><div className="mb-8"><p className="market-section-label mb-2">{t('marketplace')}</p><h1 className="font-display text-4xl font-bold tracking-tight text-ink dark:text-white">{t('stores')}</h1><p className="mt-2 text-muted">{t('storeIntro')}</p></div><div className="mb-8 flex flex-col gap-3 rounded-2xl border border-line bg-paper p-4 md:flex-row dark:border-line-dark dark:bg-graphite"><Input size="large" prefix={<SearchOutlined className="text-muted" />} value={term} onChange={(event) => setTerm(event.target.value)} placeholder={t('storeSearch')} className="md:max-w-xl" /><Select allowClear size="large" value={category} onChange={setCategory} placeholder={t('category')} options={CATEGORIES.map((item) => ({ value: item.key, label: categoryLabel(item.key, language) }))} className="md:w-72" /></div>{loading ? <div className="flex justify-center py-24"><Spin size="large" /></div> : filtered.length === 0 ? <Empty className="py-24" description={t('storeNotFound')} /> : <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">{filtered.map((store) => <StoreCard key={store.id} store={store} />)}</div>}</div></main>;
 }
 
 function StoreCard({ store }: { store: StoreType }) {

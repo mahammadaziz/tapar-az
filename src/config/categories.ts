@@ -288,7 +288,7 @@ export const CATEGORIES: CategoryConfig[] = [
     subcategories: realEstateSubcategories,
   },
   {
-    key: 'iş_elanları', label: 'İş Elanları', icon: 'briefcase',
+    key: 'iş_elanları', label: 'İş elanları', icon: 'briefcase', image: 'jobs',
     subcategories: jobSubcategories,
   },
   {
