@@ -25,6 +25,9 @@ import AdminDashboard from '@/pages/AdminDashboard';
 import AdminUsers from '@/pages/AdminUsers';
 import AdminSettings from '@/pages/AdminSettings';
 import { LanguageProvider } from '@/context/LanguageContext';
+import PaymentSuccess from '@/pages/payment/PaymentSuccess';
+import PaymentFailed from '@/pages/payment/PaymentFailed';
+import PaymentResult from '@/pages/payment/PaymentResult';
 
 export default function App() {
   return (
@@ -55,6 +58,9 @@ export default function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/payment-success" element={<PaymentSuccess />} />
+              <Route path="/payment-failed" element={<PaymentFailed />} />
+              <Route path="/payment-result" element={<PaymentResult />} />
               <Route path="*" element={<NotFound />} />
               </Routes>
             </AppShell>
