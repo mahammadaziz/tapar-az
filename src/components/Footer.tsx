@@ -5,7 +5,7 @@ export default function Footer() {
   const { t } = useTranslation();
   return (
     <footer className="hidden md:block border-t border-line dark:border-line-dark mt-20 bg-footer">
-      <div className="max-w-7xl mx-auto px-6 py-14 grid grid-cols-4 gap-10">
+      <div className="max-w-7xl mx-auto px-6 py-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10">
         <div>
           <div className="font-display text-xl font-bold tracking-tightest text-ink dark:text-white mb-3">
             TAPAR<span className="text-action">.AZ</span>
@@ -23,6 +23,11 @@ export default function Footer() {
           [t('favorites'), '/favoriler'], [t('messages'), '/mesajlar'],
         ]} />
         <FooterCol title={t('account')} links={[[t('login'), '/login'], [t('register'), '/register']]} />
+        <FooterCol title="TAPAR.AZ" links={[
+          ['Haqqımızda', '/haqqimizda'],
+          ['Məxfilik siyasəti', '/mexfilik-siyaseti'],
+          ['Əlaqə', '/elaqe'],
+        ]} />
       </div>
     </footer>
   );
