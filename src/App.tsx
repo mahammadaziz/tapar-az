@@ -24,6 +24,7 @@ import AdminLayout from '@/components/AdminLayout';
 import AdminDashboard from '@/pages/AdminDashboard';
 import AdminUsers from '@/pages/AdminUsers';
 import AdminSettings from '@/pages/AdminSettings';
+import AdminStores from '@/pages/AdminStores';
 import { LanguageProvider } from '@/context/LanguageContext';
 import PaymentSuccess from '@/pages/payment/PaymentSuccess';
 import PaymentFailed from '@/pages/payment/PaymentFailed';
@@ -54,6 +55,7 @@ export default function App() {
               <Route path="/profil/elanlarim" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/elanlar" element={<AdminListings />} />
+              <Route path="/admin/stores" element={<AdminStores />} />
               <Route path="/admin/users" element={<AdminUsers />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
               <Route path="/login" element={<Login />} />

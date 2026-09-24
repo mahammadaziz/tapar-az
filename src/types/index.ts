@@ -69,6 +69,15 @@ export interface Store {
   phone?: string;
   city?: string;
   verified: boolean;
+  status?: 'waiting' | 'success' | 'failed';
+  adminStatus?: 'waiting' | 'approved' | 'rejected';
+  paymentStatus?: 'waiting' | 'success' | 'failed';
+  orderId?: string;
+  transaction?: string;
+  amount?: number;
+  price?: number;
+  subscriptionName?: string;
+  ownerEmail?: string;
   createdAt: number;
   updatedAt: number;
 }
