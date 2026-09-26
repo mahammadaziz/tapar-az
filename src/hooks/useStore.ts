@@ -29,7 +29,10 @@ export function useMyStore(ownerId?: string) {
 
 export async function getStoreBySlug(slug: string) {
   const snapshot = await getDocs(query(collection(db, 'stores'), where('slug', '==', slug), limit(1)));
-  return snapshot.docs[0] ? toStore(snapshot.docs[0].data(), snapshot.docs[0].id) : null;
+  if (!snapshot.docs[0]) return null;
+  const store = toStore(snapshot.docs[0].data(), snapshot.docs[0].id);
+  if (store.status && (store.status !== 'success' || store.adminStatus !== 'approved')) return null;
+  return store;
 }
 
 export async function getStoreById(id: string) {

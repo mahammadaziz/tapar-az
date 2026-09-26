@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { CheckCircleOutlined, CloseCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { Link, useSearchParams } from 'react-router-dom';
+import { sendEpointCallback } from '@/utils/payment';
 
 type PaymentState = 'success' | 'failed' | 'pending';
 
@@ -47,6 +49,13 @@ export default function PaymentResult({ state: stateProp }: PaymentResultProps) 
   const Icon = details.icon;
   const orderId = searchParams.get('order_id') ?? searchParams.get('orderId');
   const transaction = searchParams.get('transaction');
+  const callbackData = searchParams.get('data');
+  const callbackSignature = searchParams.get('signature');
+
+  useEffect(() => {
+    if (!callbackData || !callbackSignature) return;
+    void sendEpointCallback(callbackData, callbackSignature).catch(() => undefined);
+  }, [callbackData, callbackSignature]);
 
   return (
     <section className="mx-auto flex min-h-[calc(100vh-220px)] w-full max-w-2xl items-center justify-center px-4 py-16">
@@ -76,4 +85,3 @@ export default function PaymentResult({ state: stateProp }: PaymentResultProps) 
     </section>
   );
 }
-

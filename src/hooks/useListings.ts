@@ -43,6 +43,9 @@ function matches(listing: Listing, filters: ListingFilters) {
 
 function sortListings(items: Listing[], sort: ListingFilters['sort']) {
   return [...items].sort((a, b) => {
+    const aPremium = Boolean(a.isPremium && (!a.premiumUntil || numericValue(a.premiumUntil) > Date.now()));
+    const bPremium = Boolean(b.isPremium && (!b.premiumUntil || numericValue(b.premiumUntil) > Date.now()));
+    if (aPremium !== bPremium) return Number(bPremium) - Number(aPremium);
     switch (sort) {
       case 'cheapest': return numericValue(a.price) - numericValue(b.price);
       case 'expensive': return numericValue(b.price) - numericValue(a.price);

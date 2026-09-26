@@ -1,5 +1,6 @@
 import type { AIListingDraft, CategoryKey } from '@/types';
 import { CATEGORIES } from '@/config/categories';
+import axios from 'axios';
 
 // ---------------------------------------------------------------------------
 // Isolated Gemini 3.6 provider layer (PRD §7, §18 "Gemini Security").
@@ -66,26 +67,19 @@ export async function generateListingDraft(userInput: string, selectedCategory?:
     throw new GeminiUnavailableError('AI xidməti hazırda əlçatan deyil.');
   }
 
-  let res: Response;
+  let data: GeminiResponse;
   try {
-    res = await fetch(`${GEMINI_ENDPOINT}?key=${GEMINI_API_KEY}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    const response = await axios.post<GeminiResponse>(`${GEMINI_ENDPOINT}?key=${GEMINI_API_KEY}`, {
         systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
         contents: [{ role: 'user', parts: [{ text: `The seller selected category: ${selectedCategory ?? 'not selected'} and subcategory: ${selectedSubcategory ?? 'not selected'}. Keep these selections exactly when they are provided.\n\nSeller text:\n${userInput}` }] }],
         generationConfig: { temperature: 0.4, responseMimeType: 'application/json' },
-      }),
+      }, {
+        headers: { 'Content-Type': 'application/json' },
     });
+    data = response.data;
   } catch {
     throw new GeminiUnavailableError('AI xidmətinə qoşulmaq mümkün olmadı. İnternet bağlantınızı yoxlayın.');
   }
-
-  if (!res.ok) {
-    throw new GeminiUnavailableError('AI xidməti hazırda əlçatan deyil. Zəhmət olmasa elanı əl ilə doldurun.');
-  }
-
-  const data = (await res.json()) as GeminiResponse;
   const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('') ?? '';
 
   let parsed: Partial<AIListingDraft>;
@@ -111,19 +105,17 @@ Original description:
 ${currentText}
 """`;
 
-  let res: Response;
+  let data: GeminiResponse;
   try {
-    res = await fetch(`${GEMINI_ENDPOINT}?key=${GEMINI_API_KEY}`, {
-      method: 'POST',
+    const response = await axios.post<GeminiResponse>(`${GEMINI_ENDPOINT}?key=${GEMINI_API_KEY}`, {
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    }, {
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] }),
     });
+    data = response.data;
   } catch {
     throw new GeminiUnavailableError('AI xidmətinə qoşulmaq mümkün olmadı.');
   }
-  if (!res.ok) throw new GeminiUnavailableError('AI xidməti hazırda əlçatan deyil.');
-
-  const data = (await res.json()) as GeminiResponse;
   const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('').trim();
   if (!text) throw new GeminiUnavailableError('AI boş cavab qaytardı.');
   return text;

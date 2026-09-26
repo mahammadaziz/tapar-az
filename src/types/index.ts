@@ -52,6 +52,11 @@ export interface Listing {
   ratingCount: number;
   createdAt: number; // epoch ms
   updatedAt: number;
+  isPremium?: boolean;
+  premiumUntil?: number;
+  premiumPlan?: 'top' | 'urgent' | 'vip';
+  premiumPaymentStatus?: 'waiting' | 'success' | 'failed';
+  premiumOrderId?: string;
   submittedAt?: number;
   reviewedAt?: number;
   rejectionReason?: string;
@@ -68,9 +73,24 @@ export interface Store {
   coverUrl?: string;
   phone?: string;
   city?: string;
+  address?: string;
   verified: boolean;
+  status?: 'waiting' | 'success' | 'failed';
+  adminStatus?: 'waiting' | 'approved' | 'rejected';
+  paymentStatus?: 'waiting' | 'success' | 'failed';
+  orderId?: string;
+  transaction?: string;
+  amount?: number;
+  price?: number;
+  subscriptionName?: string;
+  ownerEmail?: string;
   createdAt: number;
   updatedAt: number;
+  businessType?: 'general' | 'individual';
+  open24Hours?: boolean;
+  workingDays?: string[];
+  openingTime?: string;
+  closingTime?: string;
 }
 
 export type ExternalCategory = 'real_estate' | 'automobile' | 'electronics' | 'services' | 'jobs' | string;

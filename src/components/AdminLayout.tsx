@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { DashboardOutlined, CheckSquareOutlined, TeamOutlined, ArrowLeftOutlined, SafetyOutlined, SettingOutlined } from '@ant-design/icons';
+import { DashboardOutlined, CheckSquareOutlined, TeamOutlined, ArrowLeftOutlined, SafetyOutlined, SettingOutlined, ShopOutlined } from '@ant-design/icons';
 import { useAuth } from '@/context/AuthContext';
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
@@ -8,6 +8,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const links = [
     ['/admin', 'Dashboard', <DashboardOutlined />],
     ['/admin/elanlar', 'Elan təsdiqi', <CheckSquareOutlined />],
+    ['/admin/stores', 'Mağaza və ödənişlər', <ShopOutlined />],
     ['/admin/users', 'İstifadəçilər', <TeamOutlined />],
     ['/admin/settings', 'Ayarlar', <SettingOutlined />],
   ] as const;

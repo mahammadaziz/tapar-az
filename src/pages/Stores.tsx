@@ -21,7 +21,10 @@ export default function Stores() {
   useEffect(() => { void getDocs(collection(db, 'stores')).then((snapshot) => setStores(snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as StoreType))).catch(() => message.error('Mağazaları yükləmək mümkün olmadı.')).finally(() => setLoading(false)); }, []);
   const filtered = useMemo(() => {
     const query = term.trim().toLocaleLowerCase('az-AZ');
-    return stores.filter((store) => (!query || `${store.name} ${store.description}`.toLocaleLowerCase('az-AZ').includes(query)) && (!category || store.category === category));
+    return stores.filter((store) => {
+      const publicStore = !store.status || (store.status === 'success' && store.adminStatus === 'approved');
+      return publicStore && (!query || `${store.name} ${store.description}`.toLocaleLowerCase('az-AZ').includes(query)) && (!category || store.category === category);
+    });
   }, [category, stores, term]);
   return <main className="min-h-screen bg-offwhite pb-20 dark:bg-background"><div className="mx-auto max-w-7xl px-6 py-10 md:py-14"><div className="mb-8"><p className="market-section-label mb-2">{t('marketplace')}</p><h1 className="font-display text-4xl font-bold tracking-tight text-ink dark:text-white">{t('stores')}</h1><p className="mt-2 text-muted">{t('storeIntro')}</p></div><div className="mb-8 flex flex-col gap-3 rounded-2xl border border-line bg-paper p-4 md:flex-row dark:border-line-dark dark:bg-graphite"><Input size="large" prefix={<SearchOutlined className="text-muted" />} value={term} onChange={(event) => setTerm(event.target.value)} placeholder={t('storeSearch')} className="md:max-w-xl" /><Select allowClear size="large" value={category} onChange={setCategory} placeholder={t('category')} options={CATEGORIES.map((item) => ({ value: item.key, label: categoryLabel(item.key, language) }))} className="md:w-72" /></div>{loading ? <div className="flex justify-center py-24"><Spin size="large" /></div> : filtered.length === 0 ? <Empty className="py-24" description={t('storeNotFound')} /> : <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">{filtered.map((store) => <StoreCard key={store.id} store={store} />)}</div>}</div></main>;
 }

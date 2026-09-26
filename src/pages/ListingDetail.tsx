@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Breadcrumb, Skeleton, Result, Avatar } from 'antd';
 import {
@@ -7,6 +7,7 @@ import {
 } from '@ant-design/icons';
 import { useListing } from '@/hooks/useListing';
 import { useListings } from '@/hooks/useListings';
+import { getStoreById } from '@/hooks/useStore';
 import RatingStars from '@/components/RatingStars';
 import { ActiveViewersFull } from '@/components/ActiveViewers';
 import ListingCard from '@/components/ListingCard';
@@ -21,8 +22,16 @@ export default function ListingDetail() {
   const { listing, loading, error } = useListing(id);
   const [activeMedia, setActiveMedia] = useState(0);
   const [showPhone, setShowPhone] = useState(false);
+  const [store, setStore] = useState<import('@/types').Store | null>(null);
 
   const { listings: similar } = useListings({ category: listing?.category, sort: 'newest' });
+
+  useEffect(() => {
+    let mounted = true;
+    if (!listing?.storeId) { setStore(null); return () => { mounted = false; }; }
+    void getStoreById(listing.storeId).then((result) => { if (mounted) setStore(result); }).catch(() => { if (mounted) setStore(null); });
+    return () => { mounted = false; };
+  }, [listing?.storeId]);
 
   if (loading) {
     return (
@@ -141,7 +150,7 @@ export default function ListingDetail() {
 
         {/* SIDEBAR */}
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-ink dark:text-white">{listing.title}</h1>
+          <div className="flex flex-wrap items-start justify-between gap-3"><h1 className="font-display text-2xl font-bold tracking-tight text-ink dark:text-white">{listing.title}</h1>{listing.isPremium && (!listing.premiumUntil || Number(listing.premiumUntil) > Date.now()) && <span className="rounded-full bg-premium px-3 py-1 text-xs font-bold text-white">✨ PREMIUM</span>}</div>
           <p className="mt-2 text-3xl font-bold text-[#16a34a] dark:text-[#4ade80]">
             {listing.priceHidden || listing.price == null ? 'Razılaşma yolu ilə' : formatPrice(listing.price)}
           </p>
@@ -191,6 +200,7 @@ export default function ListingDetail() {
               )}
             </div>
           </div>
+          {store && <Link to={`/magaza/${store.slug}`} className="market-surface mt-4 flex items-center justify-between gap-3 p-4 transition hover:border-action"><div><p className="text-[11px] uppercase tracking-wide text-muted">Mağaza</p><p className="mt-1 font-semibold text-ink dark:text-white">{store.name}</p></div><span className="text-sm font-semibold text-action">Vitrinə bax →</span></Link>}
         </div>
       </div>
 
