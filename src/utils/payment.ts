@@ -22,6 +22,17 @@ export interface PaymentResponse {
   transaction?: string;
 }
 
+export const LISTING_PREMIUM_AMOUNT = 5;
+export const LISTING_PREMIUM_DAYS = 7;
+
+export interface ListingPremiumPaymentRequest {
+  orderId: string;
+  listingId: string;
+  amount: number;
+  plan: 'top' | 'urgent' | 'vip';
+  durationDays: number;
+}
+
 export async function createStorePayment(input: PaymentRequest) {
   try {
     const response = await axios.post<PaymentResponse>(`${PAYMENT_API_BASE.replace(/\/$/, '')}/api/subscription-payments`, input, {
@@ -35,6 +46,24 @@ export async function createStorePayment(input: PaymentRequest) {
     const status = axios.isAxiosError(error) ? error.response?.status : undefined;
     const data = axios.isAxiosError(error) ? error.response?.data as { message?: string; error?: string } | undefined : undefined;
     throw new Error(data?.error || data?.message || `Ödəniş yaradıla bilmədi (${status ?? 'naməlum xəta'}).`);
+  }
+}
+
+/** Starts the premium listing checkout. The callback should set isPremium=true
+ * and premiumUntil on listings/{listingId} after a successful payment. */
+export async function createListingPremiumPayment(input: ListingPremiumPaymentRequest) {
+  const endpoint = (import.meta.env.VITE_LISTING_PREMIUM_API_PATH as string | undefined)
+    || '/api/listing-premium-payments';
+  try {
+    const response = await axios.post<PaymentResponse>(`${PAYMENT_API_BASE.replace(/\/$/, '')}${endpoint}`, input, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!response.data?.redirectUrl) throw new Error('Backend redirectUrl qaytarmadı.');
+    return response.data;
+  } catch (error) {
+    const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+    const data = axios.isAxiosError(error) ? error.response?.data as { message?: string; error?: string } | undefined : undefined;
+    throw new Error(data?.error || data?.message || `Premium ödənişi yaradıla bilmədi (${status ?? 'naməlum xəta'}).`);
   }
 }
 

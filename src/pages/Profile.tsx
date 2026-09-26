@@ -1,16 +1,35 @@
 import { useState } from 'react';
-import { Avatar, Input, Button, message } from 'antd';
-import { UserOutlined } from '@ant-design/icons';
+import { Avatar, Input, Button, message, Tag } from 'antd';
+import { CrownFilled, UserOutlined } from '@ant-design/icons';
 import { useAuth } from '@/context/AuthContext';
 import { formatDateTime } from '@/utils/format';
+import { useMyListings } from '@/hooks/useMyListings';
+import { createListingPremiumPayment, LISTING_PREMIUM_AMOUNT, LISTING_PREMIUM_DAYS } from '@/utils/payment';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/firebase/config';
+import type { Listing } from '@/types';
 
 export default function Profile() {
   const { user, profile, updateUserProfile } = useAuth();
   const [displayName, setDisplayName] = useState(profile?.displayName ?? user?.displayName ?? '');
   const [phone, setPhone] = useState(profile?.phone ?? '');
   const [saving, setSaving] = useState(false);
+  const { listings, loading: listingsLoading } = useMyListings();
+  const [premiumLoading, setPremiumLoading] = useState<string | null>(null);
 
   if (!user) return null;
+
+  const makePremium = async (listing: Listing) => {
+    setPremiumLoading(listing.id);
+    const orderId = `${listing.id}-premium-${Date.now()}`;
+    try {
+      await updateDoc(doc(db, 'listings', listing.id), { premiumPaymentStatus: 'waiting', premiumPlan: 'top', premiumOrderId: orderId, updatedAt: Date.now() });
+      const payment = await createListingPremiumPayment({ orderId, listingId: listing.id, amount: LISTING_PREMIUM_AMOUNT, plan: 'top', durationDays: LISTING_PREMIUM_DAYS });
+      window.location.assign(payment.redirectUrl);
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : 'Premium ödənişi baş tutmadı.');
+    } finally { setPremiumLoading(null); }
+  };
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
@@ -35,6 +54,13 @@ export default function Profile() {
         <InfoRow label="Email" value={profile?.email ?? user.email ?? '—'} hint="Email dəyişdirilə bilməz" />
         <InfoRow label="Qeydiyyat tarixi" value={formatDateTime(profile?.createdAt)} />
       </div>
+      <section className="mt-10">
+        <div className="mb-4 flex items-end justify-between gap-3"><div><p className="market-section-label">Satış idarəetməsi</p><h2 className="mt-1 font-display text-2xl font-bold text-ink dark:text-white">Mənim elanlarım</h2></div><span className="text-sm text-muted">{listings.length} elan</span></div>
+        {listingsLoading ? <div className="market-surface p-6 text-sm text-muted">Elanlar yüklənir…</div> : listings.length === 0 ? <div className="market-surface p-6 text-sm text-muted">Hələ elan yerləşdirməmisiniz.</div> : <div className="space-y-3">{listings.map((listing) => {
+          const activePremium = Boolean(listing.isPremium && (!listing.premiumUntil || Number(listing.premiumUntil) > Date.now()));
+          return <div key={listing.id} className="market-surface flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><p className="truncate font-semibold text-ink dark:text-white">{listing.title}</p><div className="mt-1 flex items-center gap-2 text-xs text-muted"><span>{listing.status === 'active' ? 'Aktiv' : listing.status === 'pending' ? 'Yoxlamada' : listing.status}</span>{activePremium && <Tag color="gold" icon={<CrownFilled />}>Premium</Tag>}</div></div>{activePremium ? <span className="text-xs font-semibold text-premium">Premium aktivdir</span> : listing.status === 'active' ? <Button size="small" loading={premiumLoading === listing.id} onClick={() => void makePremium(listing)} icon={<CrownFilled />}>Premium et — {LISTING_PREMIUM_AMOUNT} AZN</Button> : <span className="text-xs text-muted">Aktiv olduqdan sonra premium edə bilərsiniz</span>}</div>;
+        })}</div>}
+      </section>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Steps, Input, InputNumber, Select, Button, Switch, message, Alert, Modal, Tag } from 'antd';
+import { Steps, Input, InputNumber, Select, Button, Switch, message, Alert, Modal, Tag, Card } from 'antd';
 import { doc, serverTimestamp, collection, getDocs, writeBatch } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 import { useAuth } from '@/context/AuthContext';
@@ -13,6 +13,7 @@ import { pruneHiddenValues } from '@/utils/conditionalFields';
 import { useAIListing } from '@/hooks/useAIListing';
 import type { CategoryKey, ListingAttributes, MediaItem } from '@/types';
 import { formatPrice } from '@/utils/format';
+import { createListingPremiumPayment, LISTING_PREMIUM_AMOUNT, LISTING_PREMIUM_DAYS } from '@/utils/payment';
 import { sendBrevoEmail } from '@/utils/email';
 import { listingEmailCard } from '@/utils/emailTemplates';
 import { useMyStore } from '@/hooks/useStore';
@@ -47,6 +48,7 @@ export default function CreateListing() {
   const [publishing, setPublishing] = useState(false);
   const [aiModalOpen, setAiModalOpen] = useState(false);
   const [aiAssisted, setAiAssisted] = useState(Boolean(prefill));
+  const [premiumPlan, setPremiumPlan] = useState<'top' | 'urgent' | 'vip' | null>(null);
 
   useEffect(() => {
     if (profile?.phone && !phone) setPhone(profile.phone);
@@ -125,10 +127,26 @@ export default function CreateListing() {
         updatedAt: serverTimestamp(),
         submittedAt: serverTimestamp(),
         aiAssisted,
+        ...(premiumPlan ? { premiumPaymentStatus: 'waiting', premiumPlan, premiumAmount: LISTING_PREMIUM_AMOUNT } : {}),
       };
       const batch = writeBatch(db);
       batch.set(ref, listingData);
       await batch.commit();
+      if (premiumPlan) {
+        try {
+          const payment = await createListingPremiumPayment({
+            orderId: `${draftId}-premium-${Date.now()}`,
+            listingId: draftId,
+            amount: LISTING_PREMIUM_AMOUNT,
+            plan: premiumPlan,
+            durationDays: LISTING_PREMIUM_DAYS,
+          });
+          window.location.assign(payment.redirectUrl);
+          return;
+        } catch (error) {
+          message.warning(error instanceof Error ? `${error.message} Elanınız premium olmadan yadda saxlanıldı.` : 'Premium ödənişi baş tutmadı. Elanınız yadda saxlanıldı.');
+        }
+      }
       let collectionAdminEmails: string[] = [];
       try {
         const adminsSnapshot = await getDocs(collection(db, 'tapar_admins'));
@@ -351,7 +369,18 @@ export default function CreateListing() {
         <div className="text-center py-10">
           <p className="text-lg font-semibold text-ink dark:text-white mb-2">Elanı dərc etməyə hazırsınız</p>
           <p className="text-sm text-muted mb-6">Elanınız əvvəlcə admin yoxlamasına göndəriləcək. Təsdiqdən sonra saytda görünəcək və emailinizə link gələcək.</p>
-          <Button type="primary" size="large" loading={publishing} onClick={handlePublish}>Elanı yerləşdir</Button>
+          <Card className="mx-auto mb-6 max-w-2xl text-left" title={<span className="text-premium">✨ Elanı premium et</span>}>
+            <p className="mb-4 text-sm text-muted">Elanınız siyahının əvvəlində göstərilsin və mağaza vitrininizdə fərqlənsin.</p>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {([['top', 'Yuxarı qaldır', '5 AZN'], ['urgent', 'Təcili', '5 AZN'], ['vip', 'VIP vurğulama', '5 AZN']] as const).map(([value, label, priceLabel]) => (
+                <button key={value} type="button" onClick={() => setPremiumPlan(premiumPlan === value ? null : value)} className={`rounded-xl border p-3 text-left transition ${premiumPlan === value ? 'border-premium bg-premium/10' : 'border-line dark:border-line-dark hover:border-premium'}`}>
+                  <span className="block text-sm font-bold text-ink dark:text-white">{label}</span><span className="mt-1 block text-xs text-premium">{priceLabel} / {LISTING_PREMIUM_DAYS} gün</span>
+                </button>
+              ))}
+            </div>
+            {premiumPlan && <p className="mt-3 text-xs text-muted">Ödənişdən sonra premium status callback ilə aktivləşəcək.</p>}
+          </Card>
+          <Button type="primary" size="large" loading={publishing} onClick={handlePublish}>{premiumPlan ? `Ödəniş et və elan yerləşdir — ${LISTING_PREMIUM_AMOUNT.toFixed(2)} AZN` : 'Elanı yerləşdir'}</Button>
         </div>
       )}
 
