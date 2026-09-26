@@ -5,6 +5,7 @@ import { collection, getCountFromServer } from 'firebase/firestore';
 import {
   SearchOutlined, ArrowRightOutlined, BulbFilled, CarOutlined, HomeOutlined, LaptopOutlined,
   ToolOutlined, GiftOutlined, TeamOutlined, SafetyCertificateOutlined,
+  VideoCameraOutlined,
 } from '@ant-design/icons';
 import { CATEGORIES, categoryLabel } from '@/config/categories';
 import { useListings } from '@/hooks/useListings';
@@ -14,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { db } from '@/firebase/config';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { useShortVideos } from '@/hooks/useShortVideos';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -24,6 +26,7 @@ export default function Home() {
   const [userCount, setUserCount] = useState<number | null>(null);
   const latestLoadMoreRef = useRef<HTMLDivElement | null>(null);
   const { listings: latest, loading: latestLoading, loadingMore: latestLoadingMore, hasMore: latestHasMore, loadMore: loadMoreLatest } = useListings({ sort: 'newest' });
+  const { videos } = useShortVideos(12);
   const latestSix = latest.slice(0, 6);
 
   useEffect(() => {
@@ -87,6 +90,8 @@ export default function Home() {
         </div>
         <Link to="/kateqoriyalar" className="mt-5 inline-flex rounded-full border border-[#FE6C2C]/25 px-3.5 py-1.5 text-xs font-bold text-[#FE6C2C] transition hover:bg-[#FE6C2C] hover:text-white sm:hidden">Hamısına bax</Link>
       </section>
+
+      {videos.length > 0 && <section className="mx-auto max-w-7xl px-3 py-5 sm:px-6"><div className="mb-4 flex items-center justify-between"><h2 className="flex items-center gap-2 font-display text-xl font-bold text-ink dark:text-white"><VideoCameraOutlined className="text-action" /> Sizin üçün videolar</h2><Link to="/videolar" className="text-sm font-semibold text-action">Bütün videolar →</Link></div><div className="flex snap-x gap-4 overflow-x-auto pb-3">{videos.map((video) => <Link key={video.id} to={`/videolar#${video.id}`} className="group relative block h-72 w-44 shrink-0 snap-start overflow-hidden rounded-2xl bg-black shadow-card"><video src={video.videoUrl} poster={video.coverUrl} muted playsInline preload="metadata" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /><div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-3 pt-12"><p className="line-clamp-2 text-sm font-bold text-white">{video.title}</p></div><span className="absolute left-3 top-3 rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold text-ink">▶ Video</span></Link>)}</div></section>}
 
       {/* LATEST LISTINGS */}
       <section className="mx-auto max-w-7xl px-3 py-5 sm:px-6 sm:py-6">

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Breadcrumb, Skeleton, Result, Avatar } from 'antd';
+import { Breadcrumb, Skeleton, Result, Avatar, message } from 'antd';
 import {
   EnvironmentOutlined, PhoneOutlined, UserOutlined, StarFilled, WhatsAppOutlined, MessageOutlined,
   LeftOutlined, RightOutlined,
@@ -15,13 +15,19 @@ import { getCategory, getSubcategory } from '@/config/categories';
 import { formatDateTime, formatFullDateTime, formatPrice } from '@/utils/format';
 import { useTranslation } from 'react-i18next';
 import ImageWatermark from '@/components/ImageWatermark';
+import { useAuth } from '@/context/AuthContext';
+import { createListingPremiumPayment, LISTING_PREMIUM_AMOUNT, LISTING_PREMIUM_DAYS } from '@/utils/payment';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/firebase/config';
 
 export default function ListingDetail() {
   const { id } = useParams<{ id: string }>();
   const { t } = useTranslation();
   const { listing, loading, error } = useListing(id);
+  const { user } = useAuth();
   const [activeMedia, setActiveMedia] = useState(0);
   const [showPhone, setShowPhone] = useState(false);
+  const [premiumLoading, setPremiumLoading] = useState(false);
   const [store, setStore] = useState<import('@/types').Store | null>(null);
 
   const { listings: similar } = useListings({ category: listing?.category, sort: 'newest' });
@@ -32,6 +38,20 @@ export default function ListingDetail() {
     void getStoreById(listing.storeId).then((result) => { if (mounted) setStore(result); }).catch(() => { if (mounted) setStore(null); });
     return () => { mounted = false; };
   }, [listing?.storeId]);
+
+  const makePremium = async () => {
+    if (!listing || !user || user.uid !== listing.ownerId) return;
+    setPremiumLoading(true);
+    const orderId = `${listing.id}-premium-${Date.now()}`;
+    try {
+      await updateDoc(doc(db, 'listings', listing.id), { premiumPaymentStatus: 'waiting', premiumPlan: 'top', premiumOrderId: orderId, updatedAt: Date.now() });
+      const payment = await createListingPremiumPayment({ orderId, listingId: listing.id, amount: LISTING_PREMIUM_AMOUNT, plan: 'top', durationDays: LISTING_PREMIUM_DAYS });
+      window.location.assign(payment.redirectUrl);
+    } catch (paymentError) {
+      message.error(paymentError instanceof Error ? paymentError.message : 'Premium ödənişi baş tutmadı.');
+      setPremiumLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -176,6 +196,7 @@ export default function ListingDetail() {
             </div>
           
             <div className="mt-4">
+              {user?.uid === listing.ownerId && !listing.isPremium && listing.status !== 'rejected' && <button type="button" disabled={premiumLoading} onClick={() => void makePremium()} className="mb-3 w-full rounded-lg border border-premium bg-premium/10 py-2.5 text-sm font-bold text-premium disabled:opacity-60">✨ {premiumLoading ? 'Ödəniş hazırlanır…' : `Elanı premium et — ${LISTING_PREMIUM_AMOUNT} AZN`}</button>}
               <button
                 onClick={() => setShowPhone(true)}
                 className="w-full bg-action text-white py-2.5 text-sm font-semibold inline-flex items-center justify-center gap-2 hover:opacity-85"

@@ -3,7 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Input, Avatar, Dropdown, Select } from 'antd';
 import {
   SearchOutlined, HeartOutlined, PlusOutlined, UserOutlined, MessageOutlined, SettingOutlined,
-  HomeOutlined,
+  HomeOutlined, VideoCameraOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '@/context/AuthContext';
 import { useMessages } from '@/hooks/useMessages';
@@ -59,6 +59,7 @@ export default function Header() {
             <NavLink to="/elanlar" className={navLinkClass}>{t('listings')}</NavLink>
             <NavLink to="/kateqoriyalar" className={navLinkClass}>{t('categories')}</NavLink>
             <NavLink to="/magazalar" className={navLinkClass}>{t('stores')}</NavLink>
+            <NavLink to="/videolar" className={navLinkClass}><VideoCameraOutlined /> Videolar</NavLink>
             <NavLink to={storePath} className={navLinkClass}>{storeLabel}</NavLink>
             {isAdmin && <Link to="/admin" className="inline-flex items-center gap-1 rounded-lg bg-action px-2.5 py-2 text-xs font-bold text-white transition hover:bg-[#e84f00]"><SettingOutlined /> {t('admin')}</Link>}
           </nav>
@@ -112,6 +113,7 @@ export default function Header() {
             <Link to="/favoriler" aria-label="Favorilər" title="Favorilər" className="text-lg text-muted hover:text-action"><HeartOutlined /></Link>
             {user && <Link to="/mesajlar" aria-label="Mesajlar" className="relative text-lg text-muted hover:text-action"><MessageOutlined />{unreadCount > 0 && <span className="absolute -right-2 -top-2 min-w-4 rounded-full bg-urgent px-1 text-center text-[10px] leading-4 text-white">{unreadCount > 99 ? '99+' : unreadCount}</span>}</Link>}
             <Select aria-label="Language" size="small" value={language} onChange={setLanguage} options={[{ value: 'az', label: 'AZ' }, { value: 'en', label: 'EN' }, { value: 'ru', label: 'RU' }]} className="w-[68px]" />
+            <Link to="/videolar" aria-label="Videolar" title="Videolar" className="text-lg text-muted hover:text-action"><VideoCameraOutlined /></Link>
           </div>
         </div>
       </header>
@@ -120,7 +122,7 @@ export default function Header() {
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-paper dark:bg-offwhite border-t border-line dark:border-line-dark">
         <div className="grid grid-cols-5 h-16">
           <MobileNavItem to="/" icon={<HomeOutlined />} label={t('home')} end />
-          <MobileNavItem to="/elanlar" icon={<SearchOutlined />} label={t('search')} />
+          <MobileNavItem to="/videolar" icon={<VideoCameraOutlined />} label="Videolar" />
           <MobileNavItem to="/elan-yerlesdir" icon={<PlusOutlined />} label={t('placeAd')} prominent />
           <MobileNavItem to="/favoriler" icon={<HeartOutlined />} label={t('favorites')} />
           <MobileNavItem to={user ? '/profil' : '/login'} icon={<UserOutlined />} label={t('login')} />

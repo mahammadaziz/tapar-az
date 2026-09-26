@@ -22,6 +22,23 @@ export interface MediaItem {
   order: number;
 }
 
+export interface ShortVideo {
+  id: string;
+  ownerId: string;
+  listingId?: string;
+  title: string;
+  description?: string;
+  videoUrl: string;
+  storagePath: string;
+  coverUrl?: string;
+  status: 'pending' | 'active' | 'rejected';
+  viewCount: number;
+  likeCount: number;
+  shareCount: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
 // Flexible attributes bag — keyed by field name from the category's FieldSchema[].
 export type ListingAttributes = Record<string, string | number | boolean | string[] | undefined>;
 

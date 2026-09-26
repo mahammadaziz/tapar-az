@@ -34,6 +34,8 @@ export default function AdminListings() {
     try {
       const batch = writeBatch(db);
       batch.update(doc(db, 'listings', listing.id), { status: approved ? 'active' : 'rejected', reviewedAt: serverTimestamp(), updatedAt: serverTimestamp() });
+      const videoSnapshot = await getDocs(query(collection(db, 'short_videos'), where('listingId', '==', listing.id)));
+      videoSnapshot.docs.forEach((video) => batch.update(video.ref, { status: approved ? 'active' : 'rejected', updatedAt: serverTimestamp() }));
       const link = `${window.location.origin}/elanlar/${listing.id}`;
       await batch.commit();
       try {

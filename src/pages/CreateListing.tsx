@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Steps, Input, InputNumber, Select, Button, Switch, message, Alert, Modal, Tag, Card } from 'antd';
+import { Steps, Input, InputNumber, Select, Button, Switch, message, Alert, Modal, Tag } from 'antd';
 import { doc, serverTimestamp, collection, getDocs, writeBatch } from 'firebase/firestore';
-import { db } from '@/firebase/config';
+import { db, storage } from '@/firebase/config';
+import { getDownloadURL, ref as storageRef, uploadBytes } from 'firebase/storage';
 import { useAuth } from '@/context/AuthContext';
 import { CATEGORIES, categoryLabel, getCategory, subcategoryLabel } from '@/config/categories';
 import { useLanguage } from '@/context/LanguageContext';
@@ -13,10 +14,10 @@ import { pruneHiddenValues } from '@/utils/conditionalFields';
 import { useAIListing } from '@/hooks/useAIListing';
 import type { CategoryKey, ListingAttributes, MediaItem } from '@/types';
 import { formatPrice } from '@/utils/format';
-import { createListingPremiumPayment, LISTING_PREMIUM_AMOUNT, LISTING_PREMIUM_DAYS } from '@/utils/payment';
 import { sendBrevoEmail } from '@/utils/email';
 import { listingEmailCard } from '@/utils/emailTemplates';
 import { useMyStore } from '@/hooks/useStore';
+import ShortVideoPicker from '@/components/ShortVideoPicker';
 
 const { TextArea } = Input;
 
@@ -45,10 +46,10 @@ export default function CreateListing() {
   const [description, setDescription] = useState(prefill?.description ?? '');
   const [attributes, setAttributes] = useState<ListingAttributes>(prefill?.attributes ?? {});
   const [media, setMedia] = useState<MediaItem[]>([]);
+  const [shortVideo, setShortVideo] = useState<File | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [aiModalOpen, setAiModalOpen] = useState(false);
   const [aiAssisted, setAiAssisted] = useState(Boolean(prefill));
-  const [premiumPlan, setPremiumPlan] = useState<'top' | 'urgent' | 'vip' | null>(null);
 
   useEffect(() => {
     if (profile?.phone && !phone) setPhone(profile.phone);
@@ -59,6 +60,8 @@ export default function CreateListing() {
 
   const { draft, loading: aiLoading, unavailable, generate, improve } = useAIListing();
   const [aiInput, setAiInput] = useState('');
+  const [improveInput, setImproveInput] = useState('');
+  const [generateInput, setGenerateInput] = useState('');
 
   const categoryConfig = getCategory(category);
   const subConfig = categoryConfig?.subcategories.find((s) => s.key === subcategory);
@@ -94,7 +97,8 @@ export default function CreateListing() {
   };
 
   const handleImproveDescription = async () => {
-    const improved = await improve(description, category ?? null);
+    const instruction = improveInput.trim();
+    const improved = await improve(instruction ? `${description}\n\nTəlimat: ${instruction}` : description, category ?? null);
     if (improved) setDescription(improved);
   };
 
@@ -106,6 +110,19 @@ export default function CreateListing() {
     setPublishing(true);
     try {
       const cleanedAttrs = subConfig ? pruneHiddenValues(subConfig.fields, attributes) : attributes;
+      let shortVideoData: Record<string, unknown> | null = null;
+      if (shortVideo) {
+        const shortVideoId = doc(collection(db, 'short_videos')).id;
+        const videoPath = `short-videos/${user.uid}/${shortVideoId}/${shortVideo.name}`;
+        const videoRef = storageRef(storage, videoPath);
+        try {
+          await uploadBytes(videoRef, shortVideo, { contentType: videoContentType(shortVideo) });
+          shortVideoData = { id: shortVideoId, ownerId: user.uid, listingId: draftId, title, videoUrl: await getDownloadURL(videoRef), storagePath: videoPath, status: 'pending', viewCount: 0, likeCount: 0, shareCount: 0, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
+        } catch (error) {
+          const code = error && typeof error === 'object' && 'code' in error ? String((error as { code?: unknown }).code) : '';
+          throw new Error(code.includes('storage/unauthorized') || code.includes('storage/unknown') ? 'Video yüklənmədi. Firebase Storage qaydalarını deploy edin və yenidən yoxlayın.' : 'Video yüklənmədi. Faylın formatını və ölçüsünü yoxlayın.');
+        }
+      }
       const ref = doc(db, 'listings', draftId);
       const listingData = {
         ownerId: user.uid,
@@ -127,25 +144,13 @@ export default function CreateListing() {
         updatedAt: serverTimestamp(),
         submittedAt: serverTimestamp(),
         aiAssisted,
-        ...(premiumPlan ? { premiumPaymentStatus: 'waiting', premiumPlan, premiumAmount: LISTING_PREMIUM_AMOUNT } : {}),
       };
       const batch = writeBatch(db);
       batch.set(ref, listingData);
       await batch.commit();
-      if (premiumPlan) {
-        try {
-          const payment = await createListingPremiumPayment({
-            orderId: `${draftId}-premium-${Date.now()}`,
-            listingId: draftId,
-            amount: LISTING_PREMIUM_AMOUNT,
-            plan: premiumPlan,
-            durationDays: LISTING_PREMIUM_DAYS,
-          });
-          window.location.assign(payment.redirectUrl);
-          return;
-        } catch (error) {
-          message.warning(error instanceof Error ? `${error.message} Elanınız premium olmadan yadda saxlanıldı.` : 'Premium ödənişi baş tutmadı. Elanınız yadda saxlanıldı.');
-        }
+      if (shortVideoData) {
+        const videoRef = doc(db, 'short_videos', String(shortVideoData.id));
+        await writeBatch(db).set(videoRef, shortVideoData).commit();
       }
       let collectionAdminEmails: string[] = [];
       try {
@@ -304,7 +309,7 @@ export default function CreateListing() {
 
       {/* STEP 3: MEDIA */}
       {step === 3 && (
-        <MediaUploader listingId={draftId} media={media} onChange={setMedia} />
+        <div className="space-y-6"><MediaUploader listingId={draftId} media={media} onChange={setMedia} /><ShortVideoPicker file={shortVideo} onChange={setShortVideo} /></div>
       )}
 
       {/* STEP 4: AI CHECK/IMPROVE (optional) */}
@@ -322,14 +327,14 @@ export default function CreateListing() {
           <div>
             <FieldLabel>Təsviri əlavə təlimatla yaxşılaşdırın</FieldLabel>
             <div className="flex gap-2">
-              <Input value={aiInput} onChange={(e) => setAiInput(e.target.value)} placeholder="Məs: daha peşəkar tonda yaz" />
+              <Input value={improveInput} onChange={(e) => setImproveInput(e.target.value)} placeholder="Məs: daha peşəkar tonda yaz" />
               <Button loading={aiLoading} onClick={handleImproveDescription}>AI ilə təsviri yaxşılaşdır</Button>
             </div>
           </div>
           <div>
             <FieldLabel>Sərbəst mətndən yenidən yarat</FieldLabel>
-            <TextArea rows={4} value={aiInput} onChange={(e) => setAiInput(e.target.value)} placeholder="Elanınızı sərbəst şəkildə təsvir edin..." />
-            <Button className="mt-2" loading={aiLoading} onClick={() => generate(aiInput, category, subcategory)}>AI ilə sahələri doldur</Button>
+            <TextArea rows={4} value={generateInput} onChange={(e) => setGenerateInput(e.target.value)} placeholder="Elanınızı sərbəst şəkildə təsvir edin..." />
+            <Button className="mt-2" loading={aiLoading} onClick={() => generate(generateInput, category, subcategory)}>AI ilə sahələri doldur</Button>
           </div>
           {draft && (
             <div className="border border-line dark:border-line-dark p-4">
@@ -343,7 +348,7 @@ export default function CreateListing() {
               )}
               <div className="flex gap-2 mt-3">
                 <Button type="primary" onClick={() => applyAIDraft()}>Redaktə et / Tətbiq et</Button>
-                <Button onClick={() => generate(aiInput, category, subcategory)}>Yenidən yarat</Button>
+                <Button onClick={() => generate(generateInput, category, subcategory)}>Yenidən yarat</Button>
               </div>
             </div>
           )}
@@ -369,18 +374,7 @@ export default function CreateListing() {
         <div className="text-center py-10">
           <p className="text-lg font-semibold text-ink dark:text-white mb-2">Elanı dərc etməyə hazırsınız</p>
           <p className="text-sm text-muted mb-6">Elanınız əvvəlcə admin yoxlamasına göndəriləcək. Təsdiqdən sonra saytda görünəcək və emailinizə link gələcək.</p>
-          <Card className="mx-auto mb-6 max-w-2xl text-left" title={<span className="text-premium">✨ Elanı premium et</span>}>
-            <p className="mb-4 text-sm text-muted">Elanınız siyahının əvvəlində göstərilsin və mağaza vitrininizdə fərqlənsin.</p>
-            <div className="grid gap-3 sm:grid-cols-3">
-              {([['top', 'Yuxarı qaldır', '5 AZN'], ['urgent', 'Təcili', '5 AZN'], ['vip', 'VIP vurğulama', '5 AZN']] as const).map(([value, label, priceLabel]) => (
-                <button key={value} type="button" onClick={() => setPremiumPlan(premiumPlan === value ? null : value)} className={`rounded-xl border p-3 text-left transition ${premiumPlan === value ? 'border-premium bg-premium/10' : 'border-line dark:border-line-dark hover:border-premium'}`}>
-                  <span className="block text-sm font-bold text-ink dark:text-white">{label}</span><span className="mt-1 block text-xs text-premium">{priceLabel} / {LISTING_PREMIUM_DAYS} gün</span>
-                </button>
-              ))}
-            </div>
-            {premiumPlan && <p className="mt-3 text-xs text-muted">Ödənişdən sonra premium status callback ilə aktivləşəcək.</p>}
-          </Card>
-          <Button type="primary" size="large" loading={publishing} onClick={handlePublish}>{premiumPlan ? `Ödəniş et və elan yerləşdir — ${LISTING_PREMIUM_AMOUNT.toFixed(2)} AZN` : 'Elanı yerləşdir'}</Button>
+          <Button type="primary" size="large" loading={publishing} onClick={handlePublish}>Elanı yerləşdir</Button>
         </div>
       )}
 
@@ -421,6 +415,12 @@ export default function CreateListing() {
       </div>
     </div>
   );
+}
+
+function videoContentType(file: File) {
+  if (file.type === 'video/mp4' || file.type === 'video/quicktime' || file.type === 'video/webm') return file.type;
+  const extension = file.name.split('.').pop()?.toLowerCase();
+  return extension === 'mov' ? 'video/quicktime' : extension === 'webm' ? 'video/webm' : 'video/mp4';
 }
 
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
